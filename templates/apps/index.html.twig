@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des applications{% endblock %}
+
+{% block body %}
+
+<main class="container">
+    <section class="row">
+        <div class="col-12">
+            <h1>Liste des applications</h1>
+
+            <p>Sélectionner une application</p>
+        </div>
+        {% for app in apps %}
+            <div class="col-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ app.name }}</h3>
+                        <P class="card-text"> {{app.description}}</P>
+                        <a href="{{ path(app.code ~ '_index') }}" class="btn btn-primary">Accès à l'application</a>
+                    </div>
+                </div>
+            </div>
+            
+        {% endfor %}
+    </section>
+</main>
+
+
+{% endblock %} 

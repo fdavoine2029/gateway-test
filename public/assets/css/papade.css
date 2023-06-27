@@ -1,0 +1,30 @@
+p{
+    background-color: #0CC;
+  }
+  div{
+    width: 100px;
+    height: 100px;
+    display: inline-block;
+    border: 1px solid black;
+    box-sizing: border-box;
+  }
+  
+  .relatif{
+    position: relative;
+  }
+  .haut{
+    top: 60px;/*Elément décalé de 50px vers le bas p/r à une origine*/
+  }
+  .gauche{
+    left: 150px;/*Element décalé de 150px vers la droite p/r à une origine*/
+  }
+  .droite{
+    right: 30px;/*Element décalé de 30px vers la gauchr p/r à une origine*/
+  }
+  
+  .bleu{
+    background-color: #0AF;
+  }
+  .vert{
+    background-color: #0FA;
+  }

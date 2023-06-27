@@ -1,0 +1,143 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des réceptions{% endblock %}
+
+{% block body %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('assets/js/recpt_form.js')}}"></script>
+{% endblock %}
+
+<main class="container-fluid">
+    <fieldset class="border p-2">
+        <legend  class="float-none w-auto p-2">Commande</legend>
+        <section class="row">
+            <div class="col-4">
+                    <h5> Fournisseur: {{ fournisseur.code ~ ' ' ~ fournisseur.name}}</h5>
+                    <h5> Order: {{ order.orderNum ~ ' ' ~ order.designation}}</h5>    
+            </div>
+            <div class="col-4">
+                    <h5> Article: {{ article.ref ~ ' ' ~ order.sref1 ~ ' ' ~ order.sref2}}</h5>        
+            </div>
+            <div class="col-4">
+                    <h5> Qté commandée: {{ order.toDeliverQte ~ ' ' ~ order.unit}}</h5>   
+                    <h5> Montant: {{ order.amount ~ ' ' ~ order.currency}}</h5>               
+            </div>
+        </section>
+    </fieldset>
+    <fieldset class="border p-2">
+        <legend class="float-none w-auto p-2">Réception</legend>
+        <section class="row">
+            <div class="col-2">
+                
+            </div>
+            <div class="col-4">
+                {{ form_start(receivForm) }}
+                <div hidden>
+                {{ form_row(receivForm.orderSup,{
+                    label: 'N° de reception',
+                    id: 'receivForm',
+                    value: order.id
+                }) }}
+                </div>
+                {% if order.status == 0 or order.status == 1 %}
+                    {{ form_row(receivForm.numBlFou,{
+                        label: 'N° BL fournisseur',
+                        id: 'numBlFou',
+                        value: reception.numBlFou,
+                    }) }}
+                    {{ form_row(receivForm.status,{
+                        label: 'Statut de la réception'
+                    }) }}
+                    {{ form_row(receivForm.qteRecue,{
+                        value: order.toDeliverQte
+                    }) }}
+                    {{ form_row(receivForm.comment,{
+                        value: reception.comment
+                    }) }}
+
+                {% else %}
+                    {{ form_row(receivForm.numBlFou,{
+                        label: 'N° BL fournisseur',
+                        id: 'numBlFou',
+                        value: reception.numBlFou,
+                        disabled: true
+                    }) }}
+                    {{ form_row(receivForm.status,{
+                        label: 'Statut de la réception',
+                        disabled: true
+                    }) }}
+                    {{ form_row(receivForm.qteRecue,{
+                        value: order.toDeliverQte,
+                        disabled: true
+                    }) }}
+                    {{ form_row(receivForm.comment,{
+                        value: reception.comment,
+                        disabled: true
+                    }) }}
+
+                {% endif %}
+
+                {% if article.lot == 1 %}
+                    <div>
+                        {{ form_row(receivForm.batch_num,{
+                            label: 'N° de lot',
+                            value: lot
+                        }) }}
+                    </div>
+                    {% else %}
+                    <div hidden>
+                        {{ form_row(receivForm.batch_num,{
+                            label: 'N° de lot',
+                            value: 0,
+                            disabled: true
+                        }) }}
+                    </div>
+                {% endif %}
+
+                        <button type="submit" class="btn btn-primary mt-2" {% if order.status == 2 or order.status == 3 %}disabled{% endif %}>Enregistrer</button>
+
+                
+                
+                    
+                {{ form_end(receivForm) }}
+            </div>
+            {% if article.lot == 1 %}
+            <div class="col-4 " >
+                <div  class="row"   id="etiquette">
+                    <div class="d-flex border" style="height: 140px;width: 370px;">
+                        <div class="p-2"><img src="{{ qrcode.simple }}" /></div>
+                        <div class="p-2">
+                            <div class="d-flex align-items-start flex-column" >
+                                <div class="p-1">Ref: {{ article.ref }}</div>
+                                <div class="p-1">Order: {{ order.orderNum}}</div>
+                                <div class="p-1" id="numBlFou2">BL: </div>
+                                <div class="p-1">Lot: {{ lot }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div  class="row">
+                    <div class="col-2 "></div>
+                    <div class="col-4 ">
+                        {% if order.status == 2 or order.status == 3 %}
+                            <button type="button" id="btn_papade" name="btn_papade" class="btn btn-primary mt-2"  onclick="print_papade('{{ article.ref }}','{{ lot }}','{{ order.orderNum}}')">Imprimer</button>
+                    
+                        {% else %}
+                            <button type="button" id="btn_papade" name="btn_papade" class="btn btn-primary mt-2"  onclick="print_papade('{{ article.ref }}','{{ lot }}','{{ order.orderNum}}')" disabled>Imprimer</button>
+                    
+                        {% endif %}
+
+                        </div>
+                    
+                </div>
+            </div>
+            {% endif %}
+        </section>
+    </fieldset>
+</main>
+
+
+{% endblock %}

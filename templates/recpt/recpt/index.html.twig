@@ -15,41 +15,150 @@
 {% endblock %}
 
 
-
-<main class="container">
+<main class="container-fluid">
+        <section class="row">
+        <h1> Gestion des réceptions</h1>
+            <div class="col-6">
+            
+            <div class="form-check form-switch">
+            {% if hide > 0 %}
+                <input class="form-check-input" type="checkbox" id="hideReceived"  checked>
+                {% else %}
+                <input class="form-check-input" type="checkbox" id="hideReceived">
+            {% endif %}
+            <label class="form-check-label" for="hideReceived">Masquer les commandes reçues</label>
+            </div>
+            </div>
+            <div class="col-6">
+            Délai limite: <input type="date" id="dateLimit" name="dateLimit" value="{{ delay }}">
+            </div>
+        </section>
         <section class="row">
             <div class="col-12">
-            <h1> Gestion des réceptions</h1>
-            <table id="receptions_table" class="display" style="width:100%">
+            <table id="receptions_table" class="display" style="width:100%;font-size: 0.8em">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Position</th>
-                        <th>Office</th>
-                        <th>Age</th>
-                        <th>Start date</th>
-                        <th>Salary</th>
+                        <th>sync</th>
+                        <th>id</th>
+                        <th>Cmd</th>
+                        <th>Code fou.</th>
+                        <th>Nom</th>
+                        <th>Ref. article</th>
+                        <th>Sref1</th>
+                        <th>Sref2</th>
+                        <th>Désignation</th>
+                        <th>BL</th>
+                        <th>BL Fou.</th>
+                        <th>Lot</th>
+                        <th>Qte cmd</th>
+                        <th>A livrer</th>
+                        <th>RAL</th>
+                        <th>Unité</th>
+                        <th>Délai</th>
+                        <th>Etat</th>
+                        <th>Qualité</th>
+                        <th>id_receiv</th>
                     </tr>
                 </thead>
                 <tbody>
+                {% for reception in receptions %}
                     <tr>
-                        <td>Tiger Nixon</td>
-                        <td>System Architect</td>
-                        <td>Edinburgh</td>
-                        <td>61</td>
-                        <td>2011-04-25</td>
-                        <td>$320,800</td>
+                        {% if reception.sync == 0 %}
+                        <td><img src="{{ asset('assets/images/ic_sync.png')}}" alt="sync"></td>
+                            {% else %}
+                        <td><img src="{{ asset('assets/images/ic_ok.png')}}" alt="sync"></td>
+                        {% endif %}
+
+
+                        <td>{{reception.id}}</td>
+                        <td>{{reception.order_num}}</td>
+                        <td>{{reception.code}}</td>
+                        <td>{{reception.name}}</td>
+                        <td>{{reception.ref}}</td>   
+                        <td>{{reception.sref1}}</td>   
+                        <td>{{reception.sref2}}</td>   
+                        <td>{{reception.designation}}</td>
+                        {% if reception.delivery_note != "0" %}
+                            <td>{{reception.delivery_note}}</td>
+                            {% else %}
+                            <td></td>
+                        {% endif %}
+                        <td>{{reception.num_bl_fou}}</td>
+                        {% if reception.status == 2 %}
+                            <td class="text-warning">{{reception.batch_num2}}</td>
+                        {% else %}
+                            <td>{{reception.batch_num}}</td>
+                        {% endif %}
+                        
+                        <td>{{reception.order_qte}}</td>
+                        <td>{{reception.to_deliver_qte}}</td>
+
+                        {% if reception.status == 2 %}
+                            {% if reception.to_deliver_qte - reception.qte_recue < 0 %}
+                                <td class="text-warning">0</td>
+                                {% else %}
+                                <td class="text-warning">{{reception.to_deliver_qte - reception.qte_recue}}</td>
+                            {% endif %}
+
+                        {% else %}
+                            {% if reception.to_deliver_qte - reception.receiv_qte < 0 %}
+                                <td>0</td>
+                                {% else %}
+                                <td>{{reception.to_deliver_qte - reception.receiv_qte}}</td>
+                            {% endif %}
+                        {% endif %}
+                        
+
+                        <td>{{reception.unit}}</td>
+                        <td>{{reception.delay_trsp}}</td>
+                        {% if reception.status == 0 %}
+                        <td class="text-secondary">{{reception.status_lib}}</td>
+                        {% elseif reception.status == 1 %}
+                        <td class="text-primary">{{reception.status_lib}}</td>
+                        {% elseif reception.status == 3 %}
+                        <td class="text-success">{{reception.status_lib}}</td>
+                        {% elseif reception.status == 2 %}
+                        <td class="text-warning">{{reception.status_lib}}</td>
+                        {% else %}
+                            <td>{{reception.status_lib}}</td>
+                        {% endif %}
+                        
+
+                        {% if reception.status2 == 1 %}
+                            <td class="text-success">{{reception.status2_lib}}</td>
+                        {% elseif reception.status2 == 2 %}
+                            <td class="text-warning">{{reception.status2_lib}}</td>
+                        {% else %}
+                            <td class="text-danger"></td>
+                        {% endif %}
+                        <td>{{reception.id_receiv}}</td>
+                        
+                                                               
                     </tr>
-                    
+                {% endfor %}
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th>Name</th>
-                        <th>Position</th>
-                        <th>Office</th>
-                        <th>Age</th>
-                        <th>Start date</th>
-                        <th>Salary</th>
+                        <th>sync</th>
+                        <th>id</th>
+                        <th>Cmd</th>
+                        <th>Code fou.</th>
+                        <th>Nom</th>
+                        <th>Ref. article</th>
+                        <th>Sref1</th>
+                        <th>Sref2</th>
+                        <th>Désignation</th>
+                        <th>BL</th>
+                        <th>BL Fou.</th>
+                        <th>Lot</th>
+                        <th>Qte cmd</th>
+                        <th>A livrer</th>
+                        <th>RAL</th>
+                        <th>Unité</th>
+                        <th>Délai</th>
+                        <th>Etat</th>
+                        <th>Qualité</th>
+                        <th>id_receiv</th>
                     </tr>
                 </tfoot>
             </table>

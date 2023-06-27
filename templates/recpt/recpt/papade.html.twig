@@ -1,0 +1,40 @@
+
+<html>
+    <head>
+        <style>
+            .qrcode{
+                position: absolute;
+                top: 0px;
+                left: 0px;
+            }  
+            .ref{
+                position: absolute;
+                top: 10px;
+                left: 130px;
+            } 
+            .orderNum{
+                position: absolute;
+                top: 35px;
+                left: 130px;
+            }   
+            .numBl{
+                position: absolute;
+                top: 60px;
+                left: 130px;
+            }
+            .lot{
+                position: absolute;
+                top: 85px;
+                left: 130px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="qrcode"><img src="{{ qrcode.simple }}"></div>
+        <p><span class="ref">Ref: {{ ref }}</p>
+        <div class="orderNum">Order: {{ orderNum}}</div>
+        <div class="numBl">BL: {{ numBl}}</div>
+        <div class="lot">Lot: {{ lot }}</div>
+    </body>
+</html>
+

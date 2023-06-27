@@ -4,6 +4,8 @@ doctrine:
             default:
                 url: '%env(resolve:DATABASE_URL)%'
             divalto:
+                driver: 'pdo_sqlsrv'
+                charset: UTF-8
                 url: '%env(resolve:DIVALTO_URL)%'
         default_connection: default
 
@@ -12,15 +14,33 @@ doctrine:
         #server_version: '15'
 
     orm:
-        auto_generate_proxy_classes: true
-        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
-        auto_mapping: true
-        mappings:
-            App:
-                is_bundle: false
-                dir: '%kernel.project_dir%/src/Entity'
-                prefix: 'App\Entity'
-                alias: App
+        default_entity_manager: default
+        entity_managers:
+            
+            divalto:
+                #auto_generate_proxy_classes: true
+                #naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+                #auto_mapping: true
+                connection: divalto
+                mappings:
+                    App:
+                        is_bundle: false
+                        dir: '%kernel.project_dir%/src/Entity/Divalto'
+                        prefix: 'App\Entity\Divalto'
+                        alias: App
+
+            default:
+                #auto_generate_proxy_classes: true
+                naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+                auto_mapping: true
+                connection: default
+                mappings:
+                    App:
+                        is_bundle: false
+                        dir: '%kernel.project_dir%/src/Entity'
+                        prefix: 'App\Entity'
+                        alias: App
+            
 
 when@test:
     doctrine:

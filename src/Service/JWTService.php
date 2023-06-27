@@ -99,8 +99,7 @@ class JWTService
         // On vérifie si la signature est bonne en regénérant un token
         $verifToken = $this->generate($header,$payload,$secret,0);
         return $token === $verifToken;
-
-
+        
     }
 
 

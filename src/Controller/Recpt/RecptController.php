@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Controller\Recpt;
+
+use App\Entity\QualityCtrl;
 use App\Entity\ReceivSupDetails;
 use App\Form\Recpt\receivSupDetailsFormType;
 use App\Repository\ArticlesRepository;
@@ -23,7 +25,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 
-#[Route('/recpt/recpt', name: 'recpt_')]
+#[Route('/recpt', name: 'recpt_')]
 class RecptController extends AbstractController
 {
     #[Route('/show/{hide?1}/{delay?aucun}', name: 'index')]
@@ -83,6 +85,10 @@ class RecptController extends AbstractController
             // On génére le mouvement seulement si la marchandise est conforme
             if($receivSupDetails->getStatus() == 1){
                 $excel->generateMouv($receivSupDetails,$order);
+            }else{
+                $qualityCtrl = new QualityCtrl();
+                $qualityCtrl->setOrderSup($order);
+                
             }
             
             

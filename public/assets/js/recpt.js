@@ -21,16 +21,16 @@ $(document).ready(function () {
 
     $('#hideReceived').change(function() {
         if($(this).is(":checked")) {
-           window.location.replace("/recpt/recpt/show/1/"+$('#dateLimit').val());
+           window.location.replace("/recpt/show/1/"+$('#dateLimit').val());
         }else{
-           window.location.replace("/recpt/recpt/show/0/"+$('#dateLimit').val());     
+           window.location.replace("/recpt/show/0/"+$('#dateLimit').val());     
         }
      });
      $('#dateLimit').change(function() {
         if($('#hideReceived').is(":checked")){
-            window.location.replace("/recpt/recpt/show/1/"+$(this).val()); 
+            window.location.replace("/recpt/show/1/"+$(this).val()); 
         }else{
-            window.location.replace("/recpt/recpt/show/0/"+$(this).val()); 
+            window.location.replace("/recpt/show/0/"+$(this).val()); 
         }
 
      });
@@ -39,6 +39,6 @@ $(document).ready(function () {
      var table = $('#receptions_table').DataTable();
      $('#receptions_table').on('click', 'tr', function () {
         var data = table.row(this).data();
-        window.location.replace("/recpt/recpt/add/"+data[1]+"/"+data[19]); 
+        window.location.replace("/recpt/add/"+data[1]+"/"+data[19]); 
     });
 });

@@ -14,13 +14,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpClient\HttpClient;
 
 #[AsCommand(
-    name: 'Divalto:Import-article',
-    description: 'Synchronisation des articles Divalto',
+    name: 'Divalto:Import-emballage',
+    description: 'Synchronisation des emballages Divalto',
 )]
-class ImportArticleCommand extends Command
+class ImportEmballageCommand extends Command
 {
 
-    protected static $defaultDescription = 'Synchronisation des articles Divalto.';
+    protected static $defaultDescription = 'Synchronisation des emballages Divalto.';
 
     private $em;
 
@@ -37,9 +37,8 @@ class ImportArticleCommand extends Command
     {
         $this
             // the command help shown when running the command with the "--help" option
-            ->setHelp('This command allows you to import divalto articles...')
+            ->setHelp('This command allows you to import divalto emballages...')
             ->addArgument('dossier', InputArgument::REQUIRED, 'Dossier')
-            ->addArgument('jalon', InputArgument::REQUIRED, 'Modifié ajouté depuis (jours).')
         ;
 
     ;
@@ -48,13 +47,13 @@ class ImportArticleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $output->writeln(['Lancement de l import des articles...']); 
+        $output->writeln(['Lancement de l import des emballages...']); 
         $httpClient = HttpClient::create();
         $job = new Job();
-        $job->setName('Import Articles');
-        $job->setDescription('Import des articles Divalto du dossier '. $input->getArgument('dossier'). ' modifié et ajouté depuis ' . $input->getArgument('jalon'));
+        $job->setName('Import Emballages');
+        $job->setDescription('Import des emballages Divalto du dossier '. $input->getArgument('dossier'));
         $job->setExecutedAt(new DateTimeImmutable());
-        $response = $httpClient->request('POST',$_ENV['HOST_API'].'/api/articles/import/' . $input->getArgument('dossier') . '/' . $input->getArgument('jalon'));
+        $response = $httpClient->request('POST',$_ENV['HOST_API'].'/api/emballage/import/' . $input->getArgument('dossier'));
         if (200 == $response->getStatusCode()) {
             $output->writeln($response->getContent());
             $job->setStatus(1);

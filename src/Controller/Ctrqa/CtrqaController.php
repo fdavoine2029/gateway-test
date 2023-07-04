@@ -6,7 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/ctrqa/ctrqa', name: 'ctrqa_')]
+#[Route('/ctrqa', name: 'ctrqa_')]
 class CtrqaController extends AbstractController
 {
     #[Route('/', name: 'index')]

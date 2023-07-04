@@ -9,7 +9,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class MainController extends AbstractController
 {
-    #[Route('/', name: 'main')]
+    #[Route('/temp', name: 'main')]
     public function index(CategoriesRepository $categoriesRepository): Response
     {
         return $this->render('main/index.html.twig',[

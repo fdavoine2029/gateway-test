@@ -52,7 +52,7 @@ class ARTRepository extends ServiceEntityRepository
         return $resultSet->fetchAllAssociative();
     }
 
-    public function getDivaltoArts($dossier,$days): array
+    public function getDivaltoFArts($dossier,$days): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
@@ -71,6 +71,39 @@ class ARTRepository extends ServiceEntityRepository
             FROM MOUV JOIN MVTL
             ON MOUV.DOS = MVTL.DOS AND MOUV.ENRNO = MVTL.ENRNO
             where MOUV.TICOD = 'F'
+            AND MVTL.DELDT >= GETDATE() - $days
+            AND MVTL.REFQTE <> 0
+        )
+        and DOS = '$dossier'
+        AND (ART.USERMODH > GETDATE() - $days or ART.USERCRDH > GETDATE() - $days)";
+            
+        $stmt = $conn->prepare($sql);
+        //$resultSet = $stmt->executeQuery(['price' => $price]);
+        $resultSet = $stmt->executeQuery();
+        // returns an array of arrays (i.e. a raw data set)
+        return $resultSet->fetchAllAssociative();
+    }
+
+
+    public function getDivaltoCArts($dossier,$days): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = "select 
+        ART_ID,
+        DOS,
+        REF,
+        DES,
+        ABCCOD,
+        GICOD,
+        case when (ART.USERMODH is null or ART.USERCRDH > ART.USERMODH) then ART.USERCRDH else ART.USERMODH end as REF_IMPORT_DATE 
+        from ART 
+        where REF in 
+        (
+            select MOUV.REF 
+            FROM MOUV JOIN MVTL
+            ON MOUV.DOS = MVTL.DOS AND MOUV.ENRNO = MVTL.ENRNO
+            where MOUV.TICOD = 'C'
             AND MVTL.DELDT >= GETDATE() - $days
             AND MVTL.REFQTE <> 0
         )

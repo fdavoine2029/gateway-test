@@ -3,22 +3,31 @@
 namespace App\Controller;
 
 use App\Entity\Articles;
+use App\Entity\Clients;
 use App\Entity\Divalto\ART;
 use App\Entity\Fournisseurs;
 use App\Entity\OrderSup;
-use App\Entity\ReceivSupDetails;
+use App\Entity\Sklbl\Rubriques;
+use App\Entity\Sklbl\Emballages;
+use App\Entity\Sklbl\OfsSklbl;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\ArticlesRepository;
+use App\Repository\ClientsRepository;
 use App\Repository\Divalto\ARTRepository;
+use App\Repository\Divalto\CLIRepository;
 use App\Repository\Divalto\FOURepository;
 use App\Repository\Divalto\MOUVRepository;
+use App\Repository\Divalto\SklblDivaltoRepository;
 use App\Repository\FournisseursRepository;
 use App\Repository\OrderSupRepository;
 use App\Repository\ReceivSupDetailsRepository;
+use App\Repository\Sklbl\RubriquesRepository;
+use App\Repository\Sklbl\EmballagesRepository;
+use App\Repository\Sklbl\OfsSklblRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -55,8 +64,8 @@ class DivaltoController extends AbstractController
         return $this->json($article);
     }
 
-    #[Route('/articles/import/{dossier}/{days}', name: 'articles_import', methods:['post'] )]
-    public function articles_import(ManagerRegistry $doctrine,
+    #[Route('/articlesF/import/{dossier}/{days}', name: 'articlesF_import', methods:['post'] )]
+    public function articlesF_import(ManagerRegistry $doctrine,
     ARTRepository $artRepository, 
     EntityManagerInterface $entityManager, 
     ArticlesRepository $articlesRepository,
@@ -64,7 +73,7 @@ class DivaltoController extends AbstractController
     int $days,
     Request $request): JsonResponse
     {
-        $articles = $artRepository->getDivaltoArts($dossier,$days);
+        $articles = $artRepository->getDivaltoFArts($dossier,$days);
         $currentDate = new DateTimeImmutable();
         $count = 0;
         foreach ($articles as $Divaltoarticle) {
@@ -103,6 +112,101 @@ class DivaltoController extends AbstractController
         }
         return $this->json($count . ' articles importés');
     }
+
+
+    #[Route('/articlesC/import/{dossier}/{days}', name: 'articlesC_import', methods:['post'] )]
+    public function articlesC_import(ManagerRegistry $doctrine,
+    ARTRepository $artRepository, 
+    EntityManagerInterface $entityManager, 
+    ArticlesRepository $articlesRepository,
+    string $dossier,
+    int $days,
+    Request $request): JsonResponse
+    {
+        $articles = $artRepository->getDivaltoCArts($dossier,$days);
+        $currentDate = new DateTimeImmutable();
+        $count = 0;
+        foreach ($articles as $Divaltoarticle) {
+            $import = false;
+            
+            $ref_import_date = new DateTimeImmutable($Divaltoarticle['REF_IMPORT_DATE']);
+            $article = $articlesRepository->find($Divaltoarticle['ART_ID']);
+            if($article){
+                if($ref_import_date > $article->getUpdatedAt()){
+                    $import = true;
+                }
+            }else{
+                $import = true;
+            }
+
+            if($import){
+                if(!$article){
+                    $article = new Articles();
+                    $article->setId($Divaltoarticle['ART_ID']);
+                }
+                $article->setDossier($Divaltoarticle['DOS']);     
+                $article->setRef($Divaltoarticle['REF']);
+                $article->setDesignation($Divaltoarticle['DES']);
+                $article->setAbccod($Divaltoarticle['ABCCOD']);
+                if($Divaltoarticle['GICOD'] == 3){
+                    $article->setLot(1);
+                }else{
+                    $article->setLot(0);
+                }
+                $article->setCreatedAt($currentDate);
+                $article->setUpdatedAt($currentDate);
+                $entityManager->persist($article);
+                $entityManager->flush();
+                $count ++;
+            }
+        }
+        return $this->json($count . ' articles importés');
+    }
+
+
+    #[Route('/clients/import/{dossier}/{days}', name: 'clients_import', methods:['post'] )]
+    public function clients_import(ManagerRegistry $doctrine,
+    CLIRepository $cliRepository, 
+    EntityManagerInterface $entityManager, 
+    ClientsRepository $clientsRepository,
+    string $dossier,
+    int $days,
+    Request $request): JsonResponse
+    {
+        $clients = $cliRepository->getDivaltoClis($dossier,$days);
+        $currentDate = new DateTimeImmutable();
+        $count = 0;
+        foreach ($clients as $DivaltoCli) {
+            $import = false;
+            $ref_import_date = new DateTimeImmutable($DivaltoCli['REF_IMPORT_DATE']);
+            $client = $clientsRepository->find($DivaltoCli['CLI_ID']);
+            if($client){
+                if($ref_import_date > $client->getUpdatedAt()){
+                    $import = true;
+                }
+            }else{
+                $import = true;
+            }
+            if($import){
+                if(!$client){
+                    $client = new Clients();
+                    $client->setId($DivaltoCli['CLI_ID']);
+                }
+                $client->setDossier($DivaltoCli['DOS']);     
+                $client->setCode($DivaltoCli['TIERS']);
+                $client->setName($DivaltoCli['NOM']);
+                $client->setCountry($DivaltoCli['PAY']);
+                $client->setCreatedAt($currentDate);
+                $client->setUpdatedAt($currentDate);
+                $entityManager->persist($client);
+                $entityManager->flush();
+                $count ++;
+            }
+        }
+        return $this->json($count . ' clients importés');
+    }
+
+
 
 
     #[Route('/fournisseurs/import/{dossier}/{days}', name: 'fournisseurs_import', methods:['post'] )]
@@ -242,5 +346,8 @@ class DivaltoController extends AbstractController
         }
         return $this->json($count . ' commandes fournisseurs importés');
     }
+
+    
+
 
 }

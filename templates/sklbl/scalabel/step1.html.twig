@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Scalabel - Commandes{% endblock %}
+
+{% block body %}
+
+ {% block stylesheets %}
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet"/>
+ {% endblock %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('assets/js/sklbl.js')}}"></script>
+{% endblock %}
+
+<main class="container-fluid">
+    <section class="row">
+    <h3> Scalabel - Commandes {{sklBlorder.orderNum}} du client {{client.name}}</h3>
+        {% include '_partials/_sklbl/_menu.html.twig' %}
+
+        <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Paramétrage</legend>
+            <section class="row">
+                <div class="col-12">
+                    Veuillez indiquer les champs de la feuille Excel du client correspondants aux données à charger:
+                </div>
+            </section>
+            <section class="row">
+                <div class="col-4">
+
+                </div>
+
+            </section>
+        </fieldset>
+
+
+
+        <section class="row">
+            <div class="col-6">
+
+            </div>
+            </div>
+        </section>
+    </section>
+</main>
+
+{% endblock %}

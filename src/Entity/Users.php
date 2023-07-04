@@ -58,10 +58,14 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'users', targetEntity: Orders::class)]
     private Collection $orders;
 
+    #[ORM\OneToMany(mappedBy: 'checked_by', targetEntity: QualityCtrl::class)]
+    private Collection $qualityCtrls;
+
     public function __construct()
     {
         $this->orders = new ArrayCollection();
         $this->created_at = new \DateTimeImmutable();
+        $this->qualityCtrls = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -242,6 +246,36 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($order->getUsers() === $this) {
                 $order->setUsers(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, QualityCtrl>
+     */
+    public function getQualityCtrls(): Collection
+    {
+        return $this->qualityCtrls;
+    }
+
+    public function addQualityCtrl(QualityCtrl $qualityCtrl): static
+    {
+        if (!$this->qualityCtrls->contains($qualityCtrl)) {
+            $this->qualityCtrls->add($qualityCtrl);
+            $qualityCtrl->setCheckedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeQualityCtrl(QualityCtrl $qualityCtrl): static
+    {
+        if ($this->qualityCtrls->removeElement($qualityCtrl)) {
+            // set the owning side to null (unless already changed)
+            if ($qualityCtrl->getCheckedBy() === $this) {
+                $qualityCtrl->setCheckedBy(null);
             }
         }
 

@@ -1,0 +1,169 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Scalabel - Liste des commandes{% endblock %}
+
+{% block body %}
+
+ {% block stylesheets %}
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet"/>
+ {% endblock %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('assets/js/sklbl.js')}}"></script>
+{% endblock %}
+
+
+<main class="container-fluid">
+        <section class="row">
+        <h3> Scalabel - Liste des commandes</h3>
+            <section class="row">
+                <div class="col-6">
+                    <div class="form-check form-switch">
+                    {% if hide > 0 %}
+                        <input class="form-check-input" type="checkbox" id="hideTerminated"  checked>
+                        {% else %}
+                        <input class="form-check-input" type="checkbox" id="hideTerminated">
+                    {% endif %}
+                    <label class="form-check-label" for="hideTerminated">Masquer les Ofs terminés</label>
+                    </div>
+                </div>
+            </section>
+            <section class="row">
+            <div class="col-12">
+            <table id="ofs_table" class="display" style="width:100%;font-size: 0.8em">
+                <thead>
+                    <tr>
+                        <th>Order_id</th>
+                        <th>Of_id</th>
+                        <th>sklbl_status</th>
+                        <th>Commande</th>
+                        <th>OF</th>
+                        <th>Option</th>
+                        <th>Client</th>
+                        <th>Article</th>
+                        <th>Commandé le</th>
+                        <th>Planifié le</th>
+                        <th>Qté cmd</th>
+                        <th>Qté lancée</th>
+                        <th>OF Statut</th>
+                        <th>Etape</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for of in ofs %}
+                    <tr>
+                    {% if of.order_id %}
+                            <td>{{of.order_id}}</td> 
+                            {% else %}
+                            <td>0</td>
+                        {% endif %}
+                        {% if of.id %}
+                            <td>{{of.id}}</td> 
+                            {% else %}
+                            <td>0</td>
+                        {% endif %}
+
+                        {% if of.sklbl_status %}
+                            <td>{{ of.sklbl_status}}</td>
+                            {% else %}
+                            <td>{{ of.sklbl_order_status }}</td>
+                        {% endif %}  
+
+                        {% if of.order_num %}
+                            <td>{{of.order_num}}</td> 
+                            {% else %}
+                            <td>000000</td>
+                        {% endif %}
+                        {% if of.code_of %}
+                            <td>{{of.code_of}}</td> 
+                            {% else %}
+                            <td>--------</td>
+                        {% endif %}
+                        {% if of.opt %}
+                            <td>{{of.opt}}</td> 
+                            {% else %}
+                            <td>-</td>
+                        {% endif %}
+                        {% if of.code_client %}
+                            <td>{{of.code_client ~ ': ' ~ of.name}}</td> 
+                            {% else %}
+                            <td>{{of.code_client_order ~ ': ' ~ of.name_order}}</td> 
+                        {% endif %}
+                         {% if of.ref %}
+                            <td>{{of.ref ~ ': ' ~ of.designation}}</td> 
+                            {% else %}
+                            <td>{{of.ref_order ~ ': ' ~ of.designation_order}}</td> 
+                        {% endif %}
+                        {% if of.order_at %}
+                            <td>{{of.order_at}}</td>
+                            {% else %}
+                            <td>???</td> 
+                        {% endif %}
+                        {% if of.planned_at %}
+                            <td>{{of.planned_at}}</td>
+                            {% else %}
+                            <td>???</td> 
+                        {% endif %}
+                        {% if of.order_qte %}
+                            <td>{{ of.order_qte}}</td>
+                            {% else %}
+                            <td>{{ of.qte_order}}</td>
+                        {% endif %}
+                        {% if of.launched_qte %}
+                            <td>{{ of.launched_qte}}</td>
+                            {% else %}
+                            <td>0</td>
+                        {% endif %}
+
+                        {% if of.of_status == 1 %}
+                            <td>Provisoire</td>   
+                            {% elseif of.of_status == 2 %}
+                            <td>Confirmé</td>   
+                            {% elseif of.of_status == 3 %}
+                            <td>Lancé</td> 
+                            {% elseif of.of_status == 4 %}
+                            <td>Démarré</td> 
+                            {% elseif of.of_status == 5 %}
+                            <td>Clôturé</td> 
+                            {% elseif of.of_status == 6 %}
+                            <td>Valorisé</td> 
+                            {% else %}
+                            <td>A créer</td> 
+                        {% endif %}
+                        {% if of.sklbl_status %}
+                            <td>{{ of.sklbl_status}}</td>
+                            {% else %}
+
+                            {% if of.sklbl_order_status == 0 %}
+                                <td>{{ of.sklbl_order_status_lib }}</td>
+                                {% else %}
+                                <td>Inconnu</td>
+                            {% endif %}
+                        {% endif %}                               
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Order_id</th>
+                        <th>Of_id</th>
+                        <th>sklbl_status</th>
+                        <th>Commande</th>
+                        <th>OF</th>
+                        <th>Option</th>
+                        <th>Client</th>
+                        <th>Article</th>
+                        <th>Commandé le</th>
+                        <th>Planifié le</th>
+                        <th>Qté cmd</th>
+                        <th>Qté lancée</th>
+                        <th>OF Statut</th>
+                        <th>Etape</th>
+                    </tr>
+                </tfoot>
+    </section>
+</main>
+
+{% endblock %}

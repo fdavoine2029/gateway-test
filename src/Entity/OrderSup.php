@@ -114,9 +114,13 @@ class OrderSup
     #[ORM\Column(type: Types::DECIMAL, precision: 14, scale: '0')]
     private ?string $no_ventilation = null;
 
+    #[ORM\OneToMany(mappedBy: 'order_sup', targetEntity: QualityCtrl::class)]
+    private Collection $qualityCtrls;
+
     public function __construct()
     {
         $this->receivSupDetails = new ArrayCollection();
+        $this->qualityCtrls = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -543,6 +547,36 @@ class OrderSup
     public function setNoVentilation(string $no_ventilation): static
     {
         $this->no_ventilation = $no_ventilation;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, QualityCtrl>
+     */
+    public function getQualityCtrls(): Collection
+    {
+        return $this->qualityCtrls;
+    }
+
+    public function addQualityCtrl(QualityCtrl $qualityCtrl): static
+    {
+        if (!$this->qualityCtrls->contains($qualityCtrl)) {
+            $this->qualityCtrls->add($qualityCtrl);
+            $qualityCtrl->setOrderSup($this);
+        }
+
+        return $this;
+    }
+
+    public function removeQualityCtrl(QualityCtrl $qualityCtrl): static
+    {
+        if ($this->qualityCtrls->removeElement($qualityCtrl)) {
+            // set the owning side to null (unless already changed)
+            if ($qualityCtrl->getOrderSup() === $this) {
+                $qualityCtrl->setOrderSup(null);
+            }
+        }
 
         return $this;
     }

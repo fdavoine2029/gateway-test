@@ -11,37 +11,142 @@
 {% block javascripts %}
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="{{ asset('assets/js/sklbl.js')}}"></script>
+    <script src="{{ asset('assets/js/sklbl_menu.js')}}"></script>
+    <script src="{{ asset('assets/js/sklbl_step1.js')}}"></script>
 {% endblock %}
 
 <main class="container-fluid">
     <section class="row">
-    <h3> Scalabel - Commandes {{sklBlorder.orderNum}} du client {{client.name}}</h3>
+    <h3> Scalabel - Commandes {{sklblOrder.orderNum}} du client {{client.name}}</h3>
         {% include '_partials/_sklbl/_menu.html.twig' %}
 
         <fieldset class="border p-2">
             <legend  class="float-none w-auto p-2">Paramétrage</legend>
             <section class="row">
-                <div class="col-12">
-                    Veuillez indiquer les champs de la feuille Excel du client correspondants aux données à charger:
+                <div class="col-1"></div>
+                <div class="col-11">
+                    Veuillez indiquer les colonnes par leur lettre de la feuille Excel du client correspondants aux données à charger:
                 </div>
             </section>
-            <section class="row">
-                <div class="col-4">
-
+            {{ form_start(fileForm) }}
+            <div class="row">
+                <div class="col-1"></div>
+                <div class="col-2">
+                    {{ form_label(fileForm.idColumn) }}
+                    {{ form_errors(fileForm.idColumn) }}
+                    {{ form_widget(fileForm.idColumn) }}
                 </div>
-
-            </section>
+                <div class="col-2">
+                    {{ form_label(fileForm.vendorColumn) }}
+                    {{ form_errors(fileForm.vendorColumn) }}
+                    {{ form_widget(fileForm.vendorColumn) }}
+                </div>
+                <div class="col-2">
+                    {{ form_label(fileForm.skuColumn) }}
+                    {{ form_errors(fileForm.skuColumn) }}
+                    {{ form_widget(fileForm.skuColumn) }}
+                </div>
+                <div class="col-2">
+                    {{ form_label(fileForm.skuTisseColumn) }}
+                    {{ form_errors(fileForm.skuTisseColumn) }}
+                    {{ form_widget(fileForm.skuTisseColumn) }}
+                </div>
+                <div class="col-2">
+                    {{ form_label(fileForm.qteColumn) }}
+                    {{ form_errors(fileForm.qteColumn) }}
+                    {{ form_widget(fileForm.qteColumn) }}
+                </div>
+                <div class="col-1"></div>
+                
+            </div>
+            <div class="row pt-3">
+                <div class="col-1"></div>
+                <div class="col-11">
+                    Veuillez sélectionner le fichier client:
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-1"></div>
+                <div class="col-6">
+                    {{ form_label(fileForm.clientFilename) }}
+                    {{ form_errors(fileForm.clientFilename) }}
+                    {{ form_widget(fileForm.clientFilename) }}
+                </div>
+                <div class="col-5">
+                    {{ form_label(fileForm.ligne) }}
+                    {{ form_errors(fileForm.ligne) }}
+                    {{ form_widget(fileForm.ligne) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4"></div>
+                <div class="col-2">
+                    <button type="submit" class="btn btn-primary mt-2">Lancer le chargement</button>
+                </div>
+                <div class="col-2 pt-3">
+                    {{ form_label(fileForm.deleteSku) }}
+                    {{ form_errors(fileForm.deleteSku) }}
+                    {{ form_widget(fileForm.deleteSku) }}
+                </div>
+            </div>
+            {{ form_end(fileForm) }}
+        </fieldset>
+        <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Résumé</legend>
+                <section class="row">
+                    <div class="col-1"></div>
+                    <div class="col-2">
+                        Nombre de faconniers: {{ nbfaconnier }}
+                    </div>
+                    <div class="col-2">
+                        Nombre de sku: {{ nbsku }}
+                    </div>
+                    <div class="col-2">
+                        Quantité totale commandée: {{ nbqte }}
+                    </div>
+                </section>
         </fieldset>
 
 
-
-        <section class="row">
-            <div class="col-6">
-
-            </div>
-            </div>
-        </section>
+        <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Résultats</legend>
+                <section class="row">
+                    <div class="col-12">
+                    <table id="sku_table" class="display" style="width:100%;font-size: 0.8em">
+                        <thead>
+                            <tr>
+                                <th>Façonnier</th>
+                                <th>Id</th>
+                                <th>Lot (Sku)</th>
+                                <th>Variable à tisser</th>
+                                <th>Quantités commandées</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for sku in skus %}
+                            <tr>
+                                <th>{{ sku.vendor }}</th>
+                                <th>{{ sku.id }}</th>
+                                <th>{{ sku.sku }}</th>
+                                <th>{{ sku.skuTisse }}</th>
+                                <th>{{ sku.orderQte }}</th>
+                            </tr>
+                        {% endfor %}
+                            
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>Façonnier</th>
+                                <th>Id</th>
+                                <th>Lot (Sku)</th>
+                                <th>Variable à tisser</th>
+                                <th>Quantités commandées</th>
+                            </tr>
+                        </tfoot>
+                    </div>
+                    </div>
+                </section>
+        </fieldset>
     </section>
 </main>
 

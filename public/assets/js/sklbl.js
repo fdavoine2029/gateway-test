@@ -19,6 +19,15 @@ $(document).ready(function () {
         if(data[2] == 0){
             window.location.replace("/sklbl/step_1/"+data[0]); 
         }
+        if(data[2] == 1){
+            window.location.replace("/sklbl/step_2/"+data[0]); 
+        }
+        if(data[2] == 2){
+            window.location.replace("/sklbl/step_3/"+data[0]); 
+        }
+        if(data[2] == 3){
+            window.location.replace("/sklbl/step_4/"+data[0]); 
+        }
 
         
     });

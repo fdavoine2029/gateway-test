@@ -1,0 +1,297 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Scalabel - Génération OF{% endblock %}
+
+{% block body %}
+
+ {% block stylesheets %}
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet"/>
+ {% endblock %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('assets/js/sklbl_menu.js')}}"></script>
+    <script src="{{ asset('assets/js/sklbl_step3.js')}}"></script>
+{% endblock %}
+
+<main class="container-fluid">
+    <section class="row">
+    <h3> Scalabel - Commandes {{sklblOrder.orderNum}}</h3>
+        {% include '_partials/_sklbl/_menu.html.twig' %}
+        <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Paramétrage</legend>
+            <section class="row">
+                <div class="col-1"></div>
+                <div class="col-11">
+                {% if exist %}
+                    Veuillez vérifier les informations de l'OF. {{ sklblOf.code }}
+                    {% else %}
+                    Veuillez générer l'OF sous Divalto et cliquer sur actualiser.  <button type="button" id="import_ofs" onclick="import_ofs({{ sklblOrder.id }})" class="btn btn-primary mt-2">Actualiser</button>
+                {% endif %}
+                </div>
+            </section>
+            
+        </fieldset>
+        <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Résumé de l'OF</legend>
+            <div class="row pt-2">
+            {% if exist %}
+                <div class="col-1"></div>
+                    <div class="col-5">
+                        {% if sklblOf %}
+                        <div class="row pt-2">
+                            <div class="col-12">
+                                <div class="form-group row">
+                                    <label for="codeOf" class="col-sm-2 col-form-label">N° OF:</label>
+                                    <div class="col-sm-10">
+                                        <input class="form-control" id="codeOf" type="text" disabled value={{ sklblOf.code }} >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if article %}
+                        <div class="row pt-2">
+                            <div class="col-12">
+                                <div class="form-group row">
+                                    <label for="code_article" class="col-sm-2 col-form-label">Code Article:</label>
+                                    <div class="col-sm-10">
+                                        <input class="form-control" id="code_article" type="text" value={{ article.ref }} disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if sklblOf %}
+                        <div class="row pt-2">
+                            <div class="col-12">
+                                <div class="form-group row">
+                                    <label for="qte_cmd" class="col-sm-2 col-form-label">Qté cmd:</label>
+                                    <div class="col-sm-10">
+                                    <textarea class="form-control" rows="1" id="qte_cmd"  disabled>{{ order_qte }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row pt-2">
+                            <div class="col-12">
+                                <div class="form-group row">
+                                    <label for="planifie_le" class="col-sm-2 col-form-label">Plannifié:</label>
+                                    <div class="col-sm-10">
+                                    <textarea class="form-control" rows="1" id="planifie_le"  disabled>{{ planned_at  }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+
+
+
+
+
+
+
+
+                    <div class="col-5">
+                        {% if client %}
+                        <div class="row pt-2">
+                            <div class="col-12">
+                                <div class="form-group row">
+                                    <label for="des_client" class="col-sm-2 col-form-label">Client:</label>
+                                    <div class="col-sm-10">
+                                    <textarea class="form-control" rows="1" id="des_client"  disabled>{{ client.name }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if article %}
+                        <div class="row pt-2">
+                            <div class="col-12">
+                                <div class="form-group row">
+                                    <label for="des_article" class="col-sm-2 col-form-label">Désignation:</label>
+                                    <div class="col-sm-10">
+                                    <textarea class="form-control" rows="1" id="des_article"  disabled>{{ article.designation }}</textarea>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if sklblOf %}
+                        <div class="row pt-2">
+                            <div class="col-12">
+                                <div class="form-group row">
+                                    <label for="qte_launch" class="col-sm-2 col-form-label">Qté lancée:</label>
+                                    <div class="col-sm-10">
+                                    <textarea class="form-control" rows="1" id="qte_launch"  disabled>{{ launched_qte }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row pt-2">
+                            <div class="col-12">
+                                <div class="form-group row">
+                                    <label for="qte_calc" class="col-sm-2 col-form-label">Qté calculée:</label>
+                                    <div class="col-sm-10">
+                                    <textarea {% if launched_qte == produce_qte %} class="form-control"  {% else %} class="form-control is-invalid"  {% endif %}  rows="1" id="qte_calc" disabled>{{ produce_qte  }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+        </fieldset>    
+        <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Conditionnement</legend>
+            <div class="row pt-2">
+                <div class="col-1"></div>
+                <div class="col-5">
+                    {% if cond1 %}
+                    <div class="row pt-2">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="cond1" class="col-sm-2 col-form-label">Conditio. 1:</label>
+                                <div class="col-sm-10">
+                                <textarea class="form-control" rows="1" id="cond1"  disabled>{{ cond1.libelle  }}  ( {{ cond1.unite }})</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if cond2 %}
+                    <div class="row pt-2">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="cond2" class="col-sm-2 col-form-label">Conditio. 2:</label>
+                                <div class="col-sm-10">
+                                <textarea class="form-control" rows="1" id="cond2"  disabled>{{ cond2.libelle  }}  ( {{ cond2.unite }})</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if cond3 %}
+                    <div class="row pt-2">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="cond3" class="col-sm-2 col-form-label">Conditio. 3:</label>
+                                <div class="col-sm-10">
+                                <textarea class="form-control" rows="1" id="cond3"  disabled>{{ cond3.libelle  }}  ( {{ cond3.unite }})</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if mini %}
+                    <div class="row pt-2">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="minicomplet" class="col-sm-2 col-form-label">Mini. complet:</label>
+                                <div class="col-sm-10">
+                                <textarea class="form-control" rows="1" id="minicomplet"  disabled>{{ mini.valeur }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-5">
+                    {% if cond1 %}
+                    <div class="row pt-2">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="qte1" class="col-sm-2 col-form-label">Qté :</label>
+                                <div class="col-sm-10">
+                                <textarea class="form-control" rows="1" id="qte1"  disabled>{{ cond1.qte|round }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if cond2 %}
+                    <div class="row pt-2">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="qte2" class="col-sm-2 col-form-label">Qté :</label>
+                                <div class="col-sm-10">
+                                <textarea class="form-control" rows="1" id="qte2"  disabled>{{ cond2.qte|round }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if cond3 %}
+                    <div class="row pt-2">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="qte3" class="col-sm-2 col-form-label">Qté :</label>
+                                <div class="col-sm-10">
+                                <textarea class="form-control" rows="1" id="qte3"  disabled>{{ cond3.qte|round }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </fieldset>  
+        <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Papade et fichiers</legend>
+            <div class="row pt-2">
+                <div class="col-1"></div>
+                <div class="col-5">
+                     {% if papade %}  
+                    <div class="row pt-2">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="papade" class="col-sm-2 col-form-label">Papade:</label>
+                                <div class="col-sm-10">
+                                <textarea class="form-control" rows="1" id="papade"  disabled>{{ papade.valeur }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-5">
+                    {% if fichier1 %}  
+                    <div class="row pt-2">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="fichier1" class="col-sm-2 col-form-label">fichier 1:</label>
+                                <div class="col-sm-10">
+                                <textarea class="form-control" rows="1" id="fichier1"  disabled>{{ fichier1.valeur }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4"></div>
+                <div class="col-4">
+                {% if launched_qte == produce_qte %}
+                    <button type="button" id="confirmer_of" onclick="confirmer_of({{ sklblOrder.id }})" class="btn btn-primary mt-2">Veuillez confirmer que tout est ok</button>
+                    {% else %}
+                    <button type="button" id="confirmer_of" onclick="confirmer_of({{ sklblOrder.id }})" class="btn btn-danger mt-2">Les quantités calculées et celles de l'OF sont différentes</button>
+                {% endif %}
+
+                </div>
+                <div class="col-4"></div
+            </div>
+            
+        </fieldset>      
+
+
+    </section>
+
+{% endblock %}

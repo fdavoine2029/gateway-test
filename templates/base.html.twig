@@ -16,6 +16,7 @@
     </head>
     <body>
         {% include '_partials/_nav.html.twig' %}
+        <div style="padding-top: 85px"></div>
         {% if app.user and app.user.isVerified == false %}
             <div class="alert alert-warning alert-dismissible" role="alert">
                 <button type="button" class = "btn-close" data-bs-dismiss="alert" arial-label="close"></button>

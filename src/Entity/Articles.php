@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Entity\Ofs;
 use App\Entity\Sklbl\SklblEmballage;
+use App\Entity\Sklbl\SklblFx;
 use App\Entity\Sklbl\SklblOf;
 use App\Entity\Sklbl\SklblOrders;
 use App\Repository\ArticlesRepository;
@@ -50,6 +51,7 @@ class Articles
 
     #[ORM\OneToMany(mappedBy: 'article', targetEntity: SklblOrders::class, orphanRemoval: true)]
     private Collection $sklblOrders;
+
 
 
     public function __construct()
@@ -274,5 +276,7 @@ class Articles
 
         return $this;
     }
+
+
 
 }

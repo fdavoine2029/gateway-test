@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Scalabel - Génération OF{% endblock %}
+
+{% block body %}
+
+ {% block stylesheets %}
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet"/>
+ {% endblock %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('assets/js/sklbl_menu.js')}}"></script>
+    <script src="{{ asset('assets/js/sklbl_step4.js')}}"></script>
+
+{% endblock %}
+<main class="container-fluid">
+    <section class="row">
+    <h3> Scalabel - Commandes {{sklblOrder.orderNum}}</h3>
+        {% include '_partials/_sklbl/_menu.html.twig' %}
+
+    <fieldset class="border p-2">
+        <legend  class="float-none w-auto p-2">Résumé</legend>
+        <div class="row pt-2">
+            <div class="col-1"></div>
+            <div class="col-2">
+                <b>N° OF:</b> {{ sklblOf.code }}
+            </div>
+            <div class="col-2">
+                <b>Article:</b> {{ article.ref }}
+            </div>
+            <div class="col-2">
+                <b>Client:</b> {{ client.name }}
+            </div>
+            <div class="col-2">
+                <b>Nbr de lots:</b> {{ count_sku }}
+            </div>
+            <div class="col-2">
+                <b>A produire:</b> {{ produce_qte }}
+            </div>
+        </div>
+        <div class="row pt-2">
+            <div class="col-1"></div>
+            <div class="col-3"><button type="button" onclick="generate_f1({{ sklblOf.id }})" class="btn btn-primary mt-2">Générer les données</button></div>
+            <div class="col-3"><button type="button" class="btn btn-secondary mt-2" disabled>Demander l'envoi</button></div>
+             <div class="col-3"><button type="button" class="btn btn-secondary mt-2"  disabled>Confirmer reception</button></div>   
+             <div class="col-1"></div>
+        </div>
+        
+    </fieldset>
+    <fieldset class="border p-2">
+        <legend  class="float-none w-auto p-2">Fx</legend>
+        <section class="row">
+            <div class="col-12">
+            <table id="fx_table" class="display" style="width:100%;font-size: 0.8em">
+                <thead>
+                    <tr>
+                        <th>Lot (sku)</th>
+                        <th>A tisser</th>
+                        <th>Identifiant unique</th>
+                        <th>Url</th>
+                        <th>Envoyé le</th>
+                        <th>Reçu le</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for fx in sklblFx %}
+                    <tr>
+                        <th>Lot (sku)</th>
+                        <th>A tisser</th>
+                        <th>Identifiant unique</th>
+                        <th>Url</th>
+                        <th>Envoyé le</th>
+                        <th>Reçu le</th>
+                        <th>Statut</th>
+                    </tr>
+                {% endfor %}
+                    
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Lot (sku)</th>
+                        <th>A tisser</th>
+                        <th>Identifiant unique</th>
+                        <th>Url</th>
+                        <th>Envoyé le</th>
+                        <th>Reçu le</th>
+                        <th>Statut</th>
+                    </tr>
+                </tfoot>
+            </div>
+        </section>
+    </fieldset>
+
+
+
+</main>
+{% endblock %}

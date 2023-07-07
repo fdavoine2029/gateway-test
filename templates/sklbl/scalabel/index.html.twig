@@ -65,8 +65,8 @@
                             <td>0</td>
                         {% endif %}
 
-                        {% if of.sklbl_status %}
-                            <td>{{ of.sklbl_status}}</td>
+                        {% if of.sklbl_order_status %}
+                            <td>{{ of.sklbl_order_status}}</td>
                             {% else %}
                             <td>{{ of.sklbl_order_status }}</td>
                         {% endif %}  
@@ -132,16 +132,17 @@
                             {% else %}
                             <td>A créer</td> 
                         {% endif %}
-                        {% if of.sklbl_status %}
-                            <td>{{ of.sklbl_status}}</td>
+                        {% if of.sklbl_order_status == 0 %}
+                            <td>{{ of.sklbl_order_status_lib }}</td>
+                            {% elseif of.sklbl_order_status == 1 %}
+                            <td>{{ of.sklbl_order_status_lib }}</td>
+                            {% elseif of.sklbl_order_status == 2 %}
+                            <td>{{ of.sklbl_order_status_lib }}</td>
+                            {% elseif of.sklbl_order_status == 3 %}
+                            <td>{{ of.sklbl_order_status_lib }}</td>
                             {% else %}
-
-                            {% if of.sklbl_order_status == 0 %}
-                                <td>{{ of.sklbl_order_status_lib }}</td>
-                                {% else %}
-                                <td>Inconnu</td>
-                            {% endif %}
-                        {% endif %}                               
+                            <td>Inconnu</td>
+                        {% endif %}                          
                     </tr>
                 {% endfor %}
                 </tbody>

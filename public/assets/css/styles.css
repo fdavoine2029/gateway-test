@@ -11,3 +11,14 @@ legend.field-border {
     padding:0 10px; /* To give a bit of padding on the left and right */
     border-bottom:none;
 }
+
+#logo {
+    background: url("../images/Neyret blanc.png") no-repeat center center #525252;
+    background-size: 160px;
+    height: 85px;
+    width:100%;
+    margin-bottom:45px;
+    position:fixed;
+    top:0;
+    z-index:6;
+}

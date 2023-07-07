@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Entity\Sklbl;
-
 use App\Entity\Articles;
 use App\Entity\Clients;
 use App\Repository\Sklbl\SklblOrdersRepository;
@@ -65,10 +64,24 @@ class SklblOrders
     #[ORM\OneToMany(mappedBy: 'sklblOrder', targetEntity: SklblFiles::class)]
     private Collection $sklblFiles;
 
+    #[ORM\OneToMany(mappedBy: 'sklblOrder', targetEntity: sklblSku::class)]
+    private Collection $sklblSkus;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $qteLimit = null;
+
+    #[ORM\Column(type: Types::DECIMAL, precision: 3, scale: 1, nullable: true)]
+    private ?string $percentAboveLimit = null;
+
+    #[ORM\OneToMany(mappedBy: 'sklblOrder', targetEntity: SklblFx::class)]
+    private Collection $sklbkFxs;
+
     public function __construct()
     {
         $this->sklblOfs = new ArrayCollection();
         $this->sklblFiles = new ArrayCollection();
+        $this->sklblSkus = new ArrayCollection();
+        $this->sklbkFxs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -220,10 +233,15 @@ class SklblOrders
         return $this;
     }
 
+    public function __toString()
+    {
+        return $this->order_num;
+    }
+
     /**
      * @return Collection<int, SklblOf>
      */
-    public function getSKlblOfs(): Collection
+   /* public function getSKlblOfs(): Collection
     {
         return $this->$sklblOfs;
     }
@@ -248,7 +266,7 @@ class SklblOrders
         }
 
         return $this;
-    }
+    }*/
 
     public function getSklblStatus(): ?int
     {
@@ -265,7 +283,7 @@ class SklblOrders
     /**
      * @return Collection<int, SklblFiles>
      */
-    public function getSklblFiles(): Collection
+    /*public function getSklblFiles(): Collection
     {
         return $this->sklblFiles;
     }
@@ -286,6 +304,90 @@ class SklblOrders
             // set the owning side to null (unless already changed)
             if ($sklblFile->getSklblOrder() === $this) {
                 $sklblFile->setSklblOrder(null);
+            }
+        }
+
+        return $this;
+    }*/
+
+    /**
+     * @return Collection<int, sklblSku>
+     */
+    public function getSklblSkus(): Collection
+    {
+        return $this->sklblSkus;
+    }
+
+    public function addSklblSku(sklblSku $sklblSku): static
+    {
+        if (!$this->sklblSkus->contains($sklblSku)) {
+            $this->sklblSkus->add($sklblSku);
+            $sklblSku->setSklblOrder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSklblSku(sklblSku $sklblSku): static
+    {
+        if ($this->sklblSkus->removeElement($sklblSku)) {
+            // set the owning side to null (unless already changed)
+            if ($sklblSku->getSklblOrder() === $this) {
+                $sklblSku->setSklblOrder(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getQteLimit(): ?int
+    {
+        return $this->qteLimit;
+    }
+
+    public function setQteLimit(?int $qteLimit): static
+    {
+        $this->qteLimit = $qteLimit;
+
+        return $this;
+    }
+
+    public function getPercentAboveLimit(): ?string
+    {
+        return $this->percentAboveLimit;
+    }
+
+    public function setPercentAboveLimit(?string $percentAboveLimit): static
+    {
+        $this->percentAboveLimit = $percentAboveLimit;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, SklblFx>
+     */
+    public function getSklbkFxs(): Collection
+    {
+        return $this->sklbkFxs;
+    }
+
+    public function addSklbkFx(SklblFx $sklbkFx): static
+    {
+        if (!$this->sklbkFxs->contains($sklbkFx)) {
+            $this->sklbkFxs->add($sklbkFx);
+            $sklbkFx->setSklblOrder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSklbkFx(SklblFx $sklbkFx): static
+    {
+        if ($this->sklbkFxs->removeElement($sklbkFx)) {
+            // set the owning side to null (unless already changed)
+            if ($sklbkFx->getSklblOrder() === $this) {
+                $sklbkFx->setSklblOrder(null);
             }
         }
 

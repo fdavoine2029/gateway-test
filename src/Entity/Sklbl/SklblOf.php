@@ -7,11 +7,9 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-namespace App\Entity\Sklbl;
 use App\Entity\Articles;
 use App\Entity\Clients;
-use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
+
 
 #[ORM\Entity(repositoryClass: SklblOfRepository::class)]
 class SklblOf
@@ -111,9 +109,13 @@ class SklblOf
     #[ORM\OneToMany(mappedBy: 'sklblOf', targetEntity: SklblFiles::class)]
     private Collection $sklblFiles;
 
+    #[ORM\OneToMany(mappedBy: 'sklblOf', targetEntity: SklblFx::class, orphanRemoval: true)]
+    private Collection $sklblFxs;
+
     public function __construct()
     {
         $this->sklblFiles = new ArrayCollection();
+        $this->sklblFxs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -479,7 +481,7 @@ class SklblOf
     /**
      * @return Collection<int, SklblFiles>
      */
-    public function getSklblFiles(): Collection
+   /* public function getSklblFiles(): Collection
     {
         return $this->sklblFiles;
     }
@@ -504,6 +506,36 @@ class SklblOf
         }
 
         return $this;
-    }
+    }*/
+
+   /**
+    * @return Collection<int, SklblFx>
+    */
+   public function getSklblFxs(): Collection
+   {
+       return $this->sklblFxs;
+   }
+
+   public function addSklblFx(SklblFx $sklblFx): static
+   {
+       if (!$this->sklblFxs->contains($sklblFx)) {
+           $this->sklblFxs->add($sklblFx);
+           $sklblFx->setSklblOf($this);
+       }
+
+       return $this;
+   }
+
+   public function removeSklblFx(SklblFx $sklblFx): static
+   {
+       if ($this->sklblFxs->removeElement($sklblFx)) {
+           // set the owning side to null (unless already changed)
+           if ($sklblFx->getSklblOf() === $this) {
+               $sklblFx->setSklblOf(null);
+           }
+       }
+
+       return $this;
+   }
 
 }

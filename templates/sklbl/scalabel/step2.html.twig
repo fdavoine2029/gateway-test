@@ -1,0 +1,120 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Scalabel - Commandes{% endblock %}
+
+{% block body %}
+
+ {% block stylesheets %}
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet"/>
+ {% endblock %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('assets/js/sklbl_menu.js')}}"></script>
+    <script src="{{ asset('assets/js/sklbl_step2.js')}}"></script>
+{% endblock %}
+
+<main class="container-fluid">
+    <section class="row">
+    <h3> Scalabel - Commandes {{sklblOrder.orderNum}}</h3>
+        {% include '_partials/_sklbl/_menu.html.twig' %}
+        <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Paramétrage</legend>
+            <section class="row">
+                <div class="col-1"></div>
+                <div class="col-11">
+                    Afin d'anticiper le taux de rebut, veuillez configurer les paramètres de majoration des quantités à produire :
+                </div>
+            </section>
+            {{ form_start(majForm) }}
+            <div class="row pt-2">
+                <div class="col-1"></div>
+                <div class="col-3">
+                    {{ form_label(majForm.qteLimit) }}
+                    {{ form_errors(majForm.qteLimit) }}
+                    {{ form_widget(majForm.qteLimit) }}
+                </div>
+                <div class="col-3">
+                    {{ form_label(majForm.percentAboveLimit) }}
+                    {{ form_errors(majForm.percentAboveLimit) }}
+                    {{ form_widget(majForm.percentAboveLimit) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4"></div>
+                <div class="col-2">
+                    <button type="submit" class="btn btn-primary mt-2">Lancer le calcul</button>
+                </div>
+            </div>
+
+            {{ form_end(majForm) }}
+        </fieldset>
+        <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Résumé</legend>
+                <section class="row">
+                    <div class="col-1"></div>
+                    <div class="col-2">
+                        Quantité commandée:  {{ nbqte }}
+                    </div>
+                    <div class="col-2">
+                        Quantité totale à produire:  {{ nbProduceqte }}
+                    </div>
+                    <div class="col-2">
+                        Quantité supplémentaire:  {{ nbOffqte }}
+                    </div>
+                    <div class="col-2">
+                        Taux de déchet prévisionnel: {{ percentDechet }}
+                    </div>
+                </section>
+        </fieldset>
+        <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Résultats</legend>
+                <section class="row">
+                    <div class="col-12">
+                    <table id="sku2_table" class="display" style="width:100%;font-size: 0.8em">
+                        <thead>
+                            <tr>
+                                <th>Façonnier</th>
+                                <th>Id</th>
+                                <th>Lot (Sku)</th>
+                                <th>Variable à tisser</th>
+                                <th>Quantités commandées</th>
+                                <th>Quantités supplémentaire</th>
+                                <th>Quantités à produire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for sku in skus %}
+                            <tr>
+                                <th>{{ sku.vendor }}</th>
+                                <th>{{ sku.id }}</th>
+                                <th>{{ sku.sku }}</th>
+                                <th>{{ sku.skuTisse }}</th>
+                                <th>{{ sku.orderQte }}</th>
+                                <th>{{ sku.offQte }}</th>
+                                <th>{{ sku.produceQte }}</th>
+                            </tr>
+                        {% endfor %}
+                            
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>Façonnier</th>
+                                <th>Id</th>
+                                <th>Lot (Sku)</th>
+                                <th>Variable à tisser</th>
+                                <th>Quantités commandées</th>
+                                <th>Quantités supplémentaire</th>
+                                <th>Quantités à produire</th>
+                            </tr>
+                        </tfoot>
+                    </div>
+                    </div>
+                </section>
+        </fieldset>
+
+
+    </section>
+
+{% endblock %}

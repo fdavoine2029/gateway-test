@@ -78,7 +78,7 @@ class SklblOfRepository extends ServiceEntityRepository
                 LEFT JOIN clients ON clients.id = sklbl_of.client_id
                 left JOIN articles AS articles_order ON articles_order.id = sklbl_orders.article_id
                 LEFT JOIN clients AS clients_order ON clients_order.id = sklbl_orders.client_id
-                LEFT JOIN status as status_sklbl_order ON status_sklbl_order.categorie = 'sklbl' and status_sklbl_order.code = sklbl_orders.sklbl_status
+                LEFT JOIN status as status_sklbl_order ON status_sklbl_order.categorie = 'sklbl_step' and status_sklbl_order.code = sklbl_orders.sklbl_status
                 WHERE (sklbl_of.id is not null or sklbl_orders.status < 4)
                 /*UNION ALL
         select 

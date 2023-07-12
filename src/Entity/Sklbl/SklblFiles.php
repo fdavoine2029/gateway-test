@@ -11,6 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 class SklblFiles
 {
     #[ORM\Id]
+    #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
@@ -52,6 +53,9 @@ class SklblFiles
 
     #[ORM\OneToMany(mappedBy: 'sklblFile', targetEntity: sklblSku::class)]
     private Collection $sklblSkus;
+
+    #[ORM\Column]
+    private ?int $status = null;
 
     public function __construct()
     {
@@ -259,6 +263,18 @@ class SklblFiles
                 $sklblSku->setSklblFile(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getStatus(): ?int
+    {
+        return $this->status;
+    }
+
+    public function setStatus(int $status): static
+    {
+        $this->status = $status;
 
         return $this;
     }

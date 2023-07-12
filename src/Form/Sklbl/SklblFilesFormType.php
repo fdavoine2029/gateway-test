@@ -58,7 +58,7 @@ class SklblFilesFormType extends AbstractType
                 ],
             ])
             ->add('deleteSku', CheckboxType::class, [
-                'label'    => 'Supprimer les skus existant?',
+                'label'    => 'Supprimer les skus non transféré?',
                 'required' => false,
             ])
             ->add('ligne', null, array(

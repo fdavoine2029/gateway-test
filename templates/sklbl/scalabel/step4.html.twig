@@ -42,13 +42,89 @@
         </div>
         <div class="row pt-2">
             <div class="col-1"></div>
-            <div class="col-3"><button type="button" onclick="generate_f1({{ sklblOf.id }})" class="btn btn-primary mt-2">Générer les données</button></div>
-            <div class="col-3"><button type="button" class="btn btn-secondary mt-2" disabled>Demander l'envoi</button></div>
-             <div class="col-3"><button type="button" class="btn btn-secondary mt-2"  disabled>Confirmer reception</button></div>   
+            <div class="col-11">
+            <b>Fichiers clients correspondants:</b> 
+                {% for files in sklblFiles %}
+                    <br/>{{ files.clientFilename }}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="row pt-2">
+            <div class="col-1"></div>
+            
+            {% if activateBtnTransfert %}
+                <div class="col-3"><button type="button" onclick="generate_f1({{ sklblOf.id }})" class="btn btn-success mt-2">Générer les enregistrements</button></div>
+                <div class="col-3"><button type="button" onclick="ask_transfert({{ sklblOf.id }})"class="btn btn-primary mt-2" >Demander le transfert Scalabel</button></div>
+            {% else %}
+                <div class="col-3"><button type="button" onclick="generate_f1({{ sklblOf.id }})" class="btn btn-primary mt-2">Générer les enregistrements</button></div>
+                <div class="col-3"><button type="button" class="btn btn-secondary mt-2" disabled>Demander le transfert Scalabel</button></div>
+            {% endif %}
+            
+             <div class="col-3"><button type="button" class="btn btn-secondary mt-2"  disabled>Confirmer la reception de Scalabel</button></div>   
              <div class="col-1"></div>
         </div>
         
     </fieldset>
+    <fieldset class="border p-2">
+        <legend  class="float-none w-auto p-2">Avancement</legend>
+        <section class="row">
+            <div class="col-1"></div>
+            <div class="col-10">
+                <table id="fxsum_table" class="display border" style="width:100%;font-size: 0.8em">
+                    <thead>
+                        <tr>
+                            <th>Elements</th>
+                            <th>A traiter</th>
+                            <th>Traités</th>
+                            <th>En attente transfert</th>
+                            <th>Transférés</th>
+                            <th>Réceptionnés</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>Fichiers</th>
+                            {% if countFilesNonTraite == 0 %}
+                                <th>{{ countFilesTraite }}</th>
+                                {% else %}
+                                <th>{{ countFilesNonTraite }}</th>
+                            {% endif %}
+                            <th>{{ countFilesTraite }}</th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th>Sku</th>
+                            {% if countSkuNonTraited == 0 %}
+                                <th>{{ countSkuTraited }}</th>
+                                {% else %}
+                                <th>{{ countSkuNonTraited }}</th>
+                            {% endif %}
+                            <th>{{ countSkuTraited }}</th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th>Enregistrements</th>
+                            {% if countFxNonTraited == 0 %}
+                                <th>{{ countFxTraited }}</th>
+                                {% else %}
+                                <th>{{ countFxNonTraited }}</th>
+                            {% endif %}
+                            <th>{{ countFxTraited }}</th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-1"></div>
+        </section>
+
+    </fieldset>    
     <fieldset class="border p-2">
         <legend  class="float-none w-auto p-2">Fx</legend>
         <section class="row">
@@ -66,15 +142,16 @@
                     </tr>
                 </thead>
                 <tbody>
+
                 {% for fx in sklblFx %}
                     <tr>
-                        <th>Lot (sku)</th>
-                        <th>A tisser</th>
-                        <th>Identifiant unique</th>
-                        <th>Url</th>
-                        <th>Envoyé le</th>
-                        <th>Reçu le</th>
-                        <th>Statut</th>
+                        <th> {{ fx['sku'] }}</th>
+                        <th>{{ fx['sku_tisse'] }}</th>
+                        <th>{{ fx['unique_id'] }}</th>
+                        <th>{{ fx['redirect_url'] }}</th>
+                        <th>{{ fx['sent_on'] }}</th>
+                        <th>{{ fx['received_on'] }}</th>
+                        <th>{{ fx['status'] }}</th>
                     </tr>
                 {% endfor %}
                     
@@ -90,7 +167,7 @@
                         <th>Statut</th>
                     </tr>
                 </tfoot>
-            </div>
+            </table>
         </section>
     </fieldset>
 

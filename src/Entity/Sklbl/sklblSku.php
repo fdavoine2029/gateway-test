@@ -46,6 +46,9 @@ class sklblSku
     #[ORM\JoinColumn(nullable: false)]
     private ?SklblFiles $sklblFile = null;
 
+    #[ORM\Column]
+    private ?int $status = null;
+
     public function __construct()
     {
         $this->sklblFxs = new ArrayCollection();
@@ -196,6 +199,18 @@ class sklblSku
     public function setSklblFile(?SklblFiles $sklblFile): static
     {
         $this->sklblFile = $sklblFile;
+
+        return $this;
+    }
+
+    public function getStatus(): ?int
+    {
+        return $this->status;
+    }
+
+    public function setStatus(int $status): static
+    {
+        $this->status = $status;
 
         return $this;
     }

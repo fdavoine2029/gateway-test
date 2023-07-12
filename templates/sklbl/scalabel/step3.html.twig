@@ -280,9 +280,9 @@
                 <div class="col-4"></div>
                 <div class="col-4">
                 {% if launched_qte == produce_qte %}
-                    <button type="button" id="confirmer_of" onclick="confirmer_of({{ sklblOrder.id }})" class="btn btn-primary mt-2">Veuillez confirmer que tout est ok</button>
+                    <button type="button" id="confirmer_of" onclick="confirmer_of({{ sklblOrder.id }},{{ sklblOf.id }})" class="btn btn-primary mt-2">Veuillez confirmer que tout est ok</button>
                     {% else %}
-                    <button type="button" id="confirmer_of" onclick="confirmer_of({{ sklblOrder.id }})" class="btn btn-danger mt-2">Les quantités calculées et celles de l'OF sont différentes</button>
+                    <button type="button" id="confirmer_of" onclick="confirmer_of({{ sklblOrder.id }},{{ sklblOf.id }})" class="btn btn-danger mt-2">Les quantités calculées et celles de l'OF sont différentes</button>
                 {% endif %}
 
                 </div>

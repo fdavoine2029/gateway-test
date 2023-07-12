@@ -16,3 +16,7 @@ $(document).ready(function () {
 function generate_f1(ofId) {
     window.location.replace("/sklbl/generate_f1/"+ofId);
 }
+
+function ask_transfert(ofId) {
+    window.location.replace("/sklbl/ask_transfert/"+ofId);
+}

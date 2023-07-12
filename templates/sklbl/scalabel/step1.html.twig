@@ -34,27 +34,37 @@
                 <div class="col-2">
                     {{ form_label(fileForm.idColumn) }}
                     {{ form_errors(fileForm.idColumn) }}
-                    {{ form_widget(fileForm.idColumn) }}
+                    {{ form_widget(fileForm.idColumn,{
+                            value: columnId
+                        }) }}
                 </div>
                 <div class="col-2">
                     {{ form_label(fileForm.vendorColumn) }}
                     {{ form_errors(fileForm.vendorColumn) }}
-                    {{ form_widget(fileForm.vendorColumn) }}
+                    {{ form_widget(fileForm.vendorColumn,{
+                            value: columnVendor
+                        }) }}
                 </div>
                 <div class="col-2">
                     {{ form_label(fileForm.skuColumn) }}
                     {{ form_errors(fileForm.skuColumn) }}
-                    {{ form_widget(fileForm.skuColumn) }}
+                    {{ form_widget(fileForm.skuColumn,{
+                            value: columnSku
+                        }) }}
                 </div>
                 <div class="col-2">
                     {{ form_label(fileForm.skuTisseColumn) }}
                     {{ form_errors(fileForm.skuTisseColumn) }}
-                    {{ form_widget(fileForm.skuTisseColumn) }}
+                    {{ form_widget(fileForm.skuTisseColumn,{
+                            value: columnSkuTisse
+                        }) }}
                 </div>
                 <div class="col-2">
                     {{ form_label(fileForm.qteColumn) }}
                     {{ form_errors(fileForm.qteColumn) }}
-                    {{ form_widget(fileForm.qteColumn) }}
+                    {{ form_widget(fileForm.qteColumn,{
+                            value: columnQte
+                        }) }}
                 </div>
                 <div class="col-1"></div>
                 
@@ -75,7 +85,9 @@
                 <div class="col-5">
                     {{ form_label(fileForm.ligne) }}
                     {{ form_errors(fileForm.ligne) }}
-                    {{ form_widget(fileForm.ligne) }}
+                    {{ form_widget(fileForm.ligne,{
+                            value: columnLigne
+                        }) }}
                 </div>
             </div>
             <div class="row">
@@ -95,6 +107,9 @@
             <legend  class="float-none w-auto p-2">Résumé</legend>
                 <section class="row">
                     <div class="col-1"></div>
+                    <div class="col-2">
+                        Nombre de fichiers: {{ nbfichiers }}
+                    </div>
                     <div class="col-2">
                         Nombre de faconniers: {{ nbfaconnier }}
                     </div>
@@ -120,6 +135,8 @@
                                 <th>Lot (Sku)</th>
                                 <th>Variable à tisser</th>
                                 <th>Quantités commandées</th>
+                                <th>Fichier</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -128,8 +145,10 @@
                                 <th>{{ sku.vendor }}</th>
                                 <th>{{ sku.id }}</th>
                                 <th>{{ sku.sku }}</th>
-                                <th>{{ sku.skuTisse }}</th>
-                                <th>{{ sku.orderQte }}</th>
+                                <th>{{ sku.sku_tisse }}</th>
+                                <th>{{ sku.order_qte }}</th>
+                                <th>{{ sku.client_filename }}</th>
+                                <th>{{ sku.status }}</th>
                             </tr>
                         {% endfor %}
                             
@@ -141,6 +160,8 @@
                                 <th>Lot (Sku)</th>
                                 <th>Variable à tisser</th>
                                 <th>Quantités commandées</th>
+                                <th>Fichier</th>
+                                <th>Status</th>
                             </tr>
                         </tfoot>
                     </div>

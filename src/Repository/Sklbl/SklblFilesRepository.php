@@ -39,20 +39,55 @@ class SklblFilesRepository extends ServiceEntityRepository
         }
     }
 
-//    /**
-//     * @return SklblFiles[] Returns an array of SklblFiles objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('s.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    
+
+    /**
+     * @return SklblFiles[] Returns an array of SklblFiles objects
+     */
+    public function getFileNonTransfereList($order): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->setParameter('sklblOrder', $order)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function getFileATransfereList($order): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->andWhere('s.status = :status')
+            ->setParameter('sklblOrder', $order)
+            ->setParameter('status', 1)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function countFilesTraite($order){
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(DISTINCT u.id)')
+            ->where('u.sklblOrder = :orderId')
+            ->andWhere('u.status = :status')
+            ->setParameter('orderId', $order)
+            ->setParameter('status', 1)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+
+    public function countFilesNonTraite($order){
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(DISTINCT u.id)')
+            ->where('u.sklblOrder = :orderId')
+            ->andWhere('u.status = :status')
+            ->setParameter('orderId', $order)
+            ->setParameter('status', 0)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 
 //    public function findOneBySomeField($value): ?SklblFiles
 //    {

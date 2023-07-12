@@ -74,6 +74,16 @@ class sklblSkuRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+    public function countFxNonTraited(SklblOrders $sklblOrder){
+        return $this->createQueryBuilder('u')
+            ->select('SUM(u.produce_qte)')
+            ->where('u.sklblOrder = :orderId')
+            ->andWhere('u.status = :status')
+            ->setParameter('orderId', $sklblOrder)
+            ->setParameter('status', 1)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
     public function countOffQte(SklblOrders $sklblOrder){
         return $this->createQueryBuilder('u')
             ->select('SUM(u.off_qte)')
@@ -82,21 +92,149 @@ class sklblSkuRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+    public function countFichiers(SklblOrders $sklblOrder){
+        return $this->createQueryBuilder('u')
+            ->select('count(DISTINCT u.sklblFile)')
+            ->where('u.sklblOrder = :orderId')
+            ->setParameter('orderId', $sklblOrder)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 
-//    /**
-//     * @return sklblSku[] Returns an array of sklblSku objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('s.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    public function countProduceByFileQte($sklblFile){
+        return $this->createQueryBuilder('u')
+            ->select('SUM(u.produce_qte)')
+            ->where('u.sklblFile = :sklblFile')
+            ->setParameter('sklblFile', $sklblFile)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countSkuNonTraite($order){
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(DISTINCT u.id)')
+            ->where('u.sklblOrder = :orderId')
+            ->andWhere('u.status = :status')
+            ->setParameter('orderId', $order)
+            ->setParameter('status', 1)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countSkuTraited($order){
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(DISTINCT u.id)')
+            ->where('u.sklblOrder = :orderId')
+            ->andWhere('u.status = :status')
+            ->setParameter('orderId', $order)
+            ->setParameter('status', 2)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+
+    public function getSkuList(SklblOrders $sklblOrder){
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = "select sku.*,file.client_filename,status.name as status
+                from sklbl_sku as sku
+                left join sklbl_orders as ord
+                on ord.id = sku.sklbl_order_id
+                left join sklbl_files as file
+                on file.id = sku.sklbl_file_id
+                left join status
+                on status.categorie = 'sklbl_sku' and status.code = sku.status
+                where ord.id = ".$sklblOrder->getId()."
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $resultSet = $stmt->executeQuery();
+ 
+        // returns an array of arrays (i.e. a raw data set)
+        return $resultSet->fetchAllAssociative();
+    }
+
+    public function getSkuNonTransfereList(SklblOrders $sklblOrder){
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = "select sku.*,file.client_filename,status.name as status
+                from sklbl_sku as sku
+                left join sklbl_orders as ord
+                on ord.id = sku.sklbl_order_id
+                left join sklbl_files as file
+                on file.id = sku.sklbl_file_id
+                left join status
+                on status.categorie = 'sklbl_file' and status.code = file.status
+                where ord.id = ".$sklblOrder->getId()."
+                and file.status = 0
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $resultSet = $stmt->executeQuery();
+ 
+        // returns an array of arrays (i.e. a raw data set)
+        return $resultSet->fetchAllAssociative();
+    }
+
+    /**
+     * @return sklblSku[] Returns an array of sklblSku objects
+     */
+    public function findNotGeneratedByFile($file): array
+    {
+        return $this->createQueryBuilder('s')
+            ->where('s.sklblFile = :sklblFile')
+            ->andWhere('s.status = :status')
+            ->setParameter('sklblFile', $file)
+            ->setParameter('status', 1)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    /**
+     * @return sklblSku[] Returns an array of sklblSku objects
+     */
+    public function getSkuATransfereListByFile($file): array
+    {
+        return $this->createQueryBuilder('s')
+            ->where('s.sklblFile = :sklblFile')
+            ->andWhere('s.status = :status')
+            ->setParameter('sklblFile', $file)
+            ->setParameter('status', 2)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    /**
+     * @return sklblSku[] Returns an array of sklblSku objects
+     */
+    public function getSkuStatus0List($order): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->andWhere('s.status = :status')
+            ->setParameter('sklblOrder', $order)
+            ->setParameter('status', 0)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    /**
+     * @return sklblSku[] Returns an array of sklblSku objects
+     */
+    public function getSkuStatus1List($order): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->andWhere('s.status = :status')
+            ->setParameter('sklblOrder', $order)
+            ->setParameter('status', 1)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
 
 //    public function findOneBySomeField($value): ?sklblSku
 //    {

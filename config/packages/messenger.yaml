@@ -17,8 +17,13 @@ framework:
 
         routing:
             #Symfony\Component\Mailer\Messenger\SendEmailMessage: async
-            Symfony\Component\Notifier\Message\ChatMessage: async
-            Symfony\Component\Notifier\Message\SmsMessage: async
+            App\Service\sklbl\SklblStep41Service: async
+            App\Service\sklbl\SklblStep1Service: async
+            
+            #Symfony\Component\Notifier\Message\ChatMessage: async
+            #Symfony\Component\Notifier\Message\SmsMessage: async
+            #App\Message\SendNotification: async
+            
 
             # Route your messages to the transports
             # 'App\Message\YourMessage': async

@@ -82,6 +82,7 @@
                                 <th>Quantités commandées</th>
                                 <th>Quantités supplémentaire</th>
                                 <th>Quantités à produire</th>
+                                <th>Statut</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -90,10 +91,11 @@
                                 <th>{{ sku.vendor }}</th>
                                 <th>{{ sku.id }}</th>
                                 <th>{{ sku.sku }}</th>
-                                <th>{{ sku.skuTisse }}</th>
-                                <th>{{ sku.orderQte }}</th>
-                                <th>{{ sku.offQte }}</th>
-                                <th>{{ sku.produceQte }}</th>
+                                <th>{{ sku.sku_tisse }}</th>
+                                <th>{{ sku.order_qte }}</th>
+                                <th>{{ sku.off_qte }}</th>
+                                <th>{{ sku.produce_qte }}</th>
+                                <th>{{ sku.status }}</th>
                             </tr>
                         {% endfor %}
                             
@@ -107,6 +109,7 @@
                                 <th>Quantités commandées</th>
                                 <th>Quantités supplémentaire</th>
                                 <th>Quantités à produire</th>
+                                <th>Statut</th>
                             </tr>
                         </tfoot>
                     </div>

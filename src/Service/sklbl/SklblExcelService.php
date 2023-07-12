@@ -2,13 +2,20 @@
 
 namespace App\Service\sklbl;
 
+use App\Entity\Sklbl\SklblFiles;
+use App\Entity\Sklbl\SklblOf;
 use App\Entity\Sklbl\SklblOrders;
 use App\Entity\Sklbl\sklblSku;
+use Doctrine\ORM\EntityManagerInterface;
+use PhpOffice\PhpSpreadsheet\Reader\Csv;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class SklblExcelService
 {
+
+
 
     public function integrateCustomerFile(SklblOrders $sklblOrder,$path,$vendorColumn,$skuColumn,$qteColumn): array
     {
@@ -36,5 +43,19 @@ class SklblExcelService
             $r = chr($n%26 + 0x41) . $r;
         return $r;
     }
+
+
+    public function createNewF1(SklblFiles $file,$param){
+        $of = $file->getSklblOf();
+        $order = $file->getSklblOrder();
+        $filename = $param .'/'. $of->getCode().'-'.$order->getOrderNum().'-'.$file->getId().'-f1.csv';
+        $spreadsheet = new Spreadsheet();
+        $activeWorkSheet = $spreadsheet->getActiveSheet();
+        $activeWorkSheet->setCellValue('A1','Hello World');
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Csv($spreadsheet);
+        $writer->save($filename);
+        return $filename;
+    }
+
 
 }

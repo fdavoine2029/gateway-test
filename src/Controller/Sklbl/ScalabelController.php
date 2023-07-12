@@ -14,6 +14,7 @@ use App\Entity\Sklbl\SklblRubrique;
 use App\Entity\Sklbl\sklblSku;
 use App\Form\Sklbl\SklblFilesFormType;
 use App\Form\Sklbl\SklblMajorationFormType;
+use App\Message\SendNotification;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,15 +29,22 @@ use App\Repository\Sklbl\SklblOrdersRepository;
 use App\Repository\Sklbl\SklblRubriqueRepository;
 use App\Repository\Sklbl\sklblSkuRepository;
 use App\Service\sklbl\SklblExcelService;
+use App\Service\sklbl\SklblFileCustomerService;
+use App\Service\sklbl\SklblStep1Service;
+use App\Service\sklbl\SklblStep41Service;
+use App\Service\sklbl\SklblStep42Service;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use FOS\RestBundle\Request\ParamFetcherInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[Route('/sklbl', name: 'sklbl_')]
 class ScalabelController extends AbstractController
@@ -52,46 +60,8 @@ class ScalabelController extends AbstractController
         ]);
     }
 
-    #[Route('/import_ofs/{order_id}', name: 'import_ofs')]
-    public function import_ofs(
-        SklblOrdersRepository $sklblOrdersRepository,
-        KernelInterface $kernel,
-        int $order_id): Response
-        {
-        $sklblOrder = $sklblOrdersRepository->find($order_id);
-        $application = new Application($kernel);
-        $application->setAutoExit(false);
-
-        $input = new ArrayInput([
-                'command' => 'Sklbl:Import-ofs',
-                // (optional) define the value of command arguments
-                'dossier' => $sklblOrder->getDossier(),
-                'jalon' => 10,
-                // (optional) pass options to the command
-            ]);
-
-            // You can use NullOutput() if you don't need the output
-        $output = new BufferedOutput();
-        $application->run($input, $output);
-        return $this->redirectToRoute('sklbl_step_3', [
-            'order_id' => $order_id
-        ]);
-    }
-
-    #[Route('/confirmer_of/{order_id}', name: 'import_ofs')]
-    public function confirmer_of(
-        SklblOrdersRepository $sklblOrdersRepository,
-        EntityManagerInterface $entityManager,
-        int $order_id): Response
-        {
-        $sklblOrder = $sklblOrdersRepository->find($order_id);
-        $sklblOrder->setSklblStatus(3);
-        $entityManager->persist($sklblOrder);
-        $entityManager->flush();
-        return $this->render('sklbl/scalabel/step4.html.twig', [
-            'sklblOrder' => $sklblOrder
-        ]);
-    }
+    
+    
 
 
     #[Route('/step_1/{order_id}', name: 'step_1')]
@@ -102,19 +72,38 @@ class ScalabelController extends AbstractController
         SklblSkuRepository $sklblSkuRepository,
         SluggerInterface $slugger,
         EntityManagerInterface $entityManager,
+        MessageBusInterface $bus,
         int $order_id): Response
     {
         $sklblOrder = $sklblOrdersRepository->find($order_id);
-        $skulist = $sklblOrder->getSklblSkus();
-        $sklblFiles = $sklblFilesRepository->find($order_id);
-        if(!$sklblFiles){
-            $sklblFiles = new SklblFiles();
+        $skulist =$sklblSkuRepository->getSkuList($sklblOrder);
+        $skulistNonTransfere = $sklblSkuRepository->getSkuNonTransfereList($sklblOrder);
+        $sklblFilesNonTransfere = $sklblFilesRepository->getFileNonTransfereList($sklblOrder);
+        $sklblFiles = new SklblFiles();
+        $sklblFiles_param = $sklblFilesRepository->findOneBySklblOrder($sklblOrder);
+        
+        if($sklblFiles_param){
+            
+            $columnId = $sklblFiles_param->getIdColumn();
+            $columnVendor = $sklblFiles_param->getVendorColumn();
+            $columnSku = $sklblFiles_param->getSkuColumn();
+            $columnSkuTisse = $sklblFiles_param->getSkuTisseColumn();
+            $columnQte = $sklblFiles_param->getQteColumn();
+            $columnLigne = $sklblFiles_param->getLigne();
+        }else{
+            $columnId = "";
+            $columnVendor = "";
+            $columnSku = "";
+            $columnSkuTisse = "";
+            $columnQte = "";
+            $columnLigne = "";
         }
         $form = $this->createForm(SklblFilesFormType::class, $sklblFiles);
         $client = $sklblOrder->getClient();
         $countFaconnier = $sklblSkuRepository->countFaconnier($sklblOrder);
         $countSku = $sklblSkuRepository->countSku($sklblOrder);
         $countQte = $sklblSkuRepository->countQte($sklblOrder);
+        $countFichiers = $sklblSkuRepository->countFichiers($sklblOrder);
 
         // On intercepte la soumission du formulaire
         $form->handleRequest($request);
@@ -129,14 +118,55 @@ class ScalabelController extends AbstractController
             $qteColumn = $form->get('qteColumn')->getData();
             $deleteSku = $form->get('deleteSku')->getData();
             $ligne = $form->get('ligne')->getData();
+            /*if($deleteSku){
+                $deleteSku = 1;
+            }else{
+                $deleteSku = 0;
+            }
+
+            // On récupère le fichier client
+            if ($clientFile) {
+                $originalFilename = pathinfo($clientFile->getClientOriginalName(), PATHINFO_FILENAME);
+                // this is needed to safely include the file name as part of the URL
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename.'-'.uniqid().'.'.$clientFile->guessExtension();
+                try {
+                    $path = $this->getParameter('sklbl_client_file_directory').'/'.$newFilename;
+                    $clientFile->move($this->getParameter('sklbl_client_file_directory'),$newFilename);
+                    $bus->dispatch(new SklblStep1Service(
+                        $order_id,
+                        $newFilename,
+                        $path,
+                        $vendorColumn,
+                        $idColumn,
+                        $skuColumn,
+                        $skuTisseColumn,
+                        $qteColumn,
+                        $deleteSku,
+                        $ligne
+                    ));
+
+                } catch (FileException $e) {
+                    $this->addFlash('error','Erreur chargement fichier');
+                }
+            }
+            */
+
+
 
             //Suppression des SKU actuels si demandés
             if($deleteSku){
-                foreach($skulist as $sku){
-                    $entityManager->remove($sku);
+                foreach($skulistNonTransfere as $sku){
+                    $skuDelete = $sklblSkuRepository->find($sku['id']);
+                    $entityManager->remove($skuDelete);
+                    $entityManager->flush();
+                }
+                foreach($sklblFilesNonTransfere as $file){
+                    $entityManager->remove($file);
                     $entityManager->flush();
                 }
             }
+  
             
             // On récupère le fichier client
             if ($clientFile) {
@@ -145,13 +175,13 @@ class ScalabelController extends AbstractController
                 $safeFilename = $slugger->slug($originalFilename);
                 $newFilename = $safeFilename.'-'.uniqid().'.'.$clientFile->guessExtension();
 
-                $sklblFiles->setId($order_id);
                 $sklblFiles->setSklblOrder($sklblOrder);
                 $sklblFiles->setClientFilename($newFilename);
                 $sklblFiles->setCategorie('Customer file');
                 $sklblFiles->setVendorColumn($vendorColumn);
                 $sklblFiles->setSkuColumn($skuColumn);
                 $sklblFiles->setQteColumn($qteColumn);
+                $sklblFiles->setStatus(0);
                 $entityManager->persist($sklblFiles);
                 $entityManager->flush();
 
@@ -209,10 +239,12 @@ class ScalabelController extends AbstractController
                                     }
                                     $column_index++;
                                 }
+                                
                                 $sku->setSklblOrder($sklblOrder);
                                 $sku->setSklblFile($sklblFiles);
                                 if($nbcolonneErrors == 0){
                                     try {
+                                        $sku->setStatus(0);
                                         $entityManager->persist($sku);
                                         $entityManager->flush();
                                         $countUploadSuccess++;
@@ -234,6 +266,9 @@ class ScalabelController extends AbstractController
                         if($countUploadErrors == 0){
                             $this->addFlash('success',$countUploadSuccess. ' enregistrements chargés avec succès');
                             
+                            $sklblFiles->setStatus(0);
+                            $entityManager->persist($sklblFiles);
+                            $entityManager->flush();
 
                             $sklblOrder->setSklblStatus(1);
                             $entityManager->persist($sklblOrder);
@@ -267,9 +302,16 @@ class ScalabelController extends AbstractController
             'sklblOrder' => $sklblOrder,
             'client' => $client,
             'skus' => $skulist,
+            'columnId' => $columnId,
+            'columnVendor' => $columnVendor,
+            'columnSku' => $columnSku,
+            'columnSkuTisse' => $columnSkuTisse,
+            'columnQte' => $columnQte,
+            'columnLigne' => $columnLigne,
             'nbfaconnier' => $countFaconnier,
             'nbsku' => $countSku,
             'nbqte' => $countQte,
+            'nbfichiers' => $countFichiers,
             'fileForm' => $form->createView()
         ]);
     }
@@ -285,7 +327,8 @@ class ScalabelController extends AbstractController
         int $order_id): Response
     {
         $sklblOrder = $sklblOrdersRepository->find($order_id);
-        $skulist = $sklblOrder->getSklblSkus();
+        $skulist = $sklblSkuRepository->getSkuList($sklblOrder);
+        $skulist2 = $sklblSkuRepository->getSkuStatus0List($sklblOrder);
         $countSku = $sklblSkuRepository->countSku($sklblOrder);
         $countQte = $sklblSkuRepository->countQte($sklblOrder);
         $countProduceQte = $sklblSkuRepository->countProduceQte($sklblOrder); 
@@ -302,7 +345,7 @@ class ScalabelController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $qteLimit = $form->get('qteLimit')->getData();
             $percentAboveLimit = $form->get('percentAboveLimit')->getData();
-            foreach($skulist as $sku){
+            foreach($skulist2 as $sku){
                 if(round($sku->getOrderQte() * $percentAboveLimit / 100) < 20){
                     $sku->setProduceQte($sku->getOrderQte() + $qteLimit);
                     $sku->setOffQte($sku->getProduceQte() - $sku->getOrderQte());
@@ -311,6 +354,7 @@ class ScalabelController extends AbstractController
                     $sku->setOffQte($offQte);
                     $sku->setProduceQte($sku->getOrderQte() + $offQte);
                 }
+                $sku->setStatus(1);
                 $entityManager->persist($sku);
                 $entityManager->flush($sku);
             }
@@ -403,24 +447,104 @@ class ScalabelController extends AbstractController
     public function step_4(
         SklblOrdersRepository $sklblOrdersRepository,
         SklblOfRepository $sklblOfRepository,
+        SklblFilesRepository $sklblFilesRepository,
         SklblSkuRepository $sklblSkuRepository,
+        SklblFxRepository $sklblFxRepository,
+        int $order_id): Response
+        {
+            $sklblOrder = $sklblOrdersRepository->find($order_id);
+            $sklblOf = $sklblOfRepository->findOneBySklblOrder($sklblOrder);
+            $sklblFiles = $sklblFilesRepository->getFileNonTransfereList($sklblOrder);
+            $sklblFx = $sklblFxRepository->getFxInTraitement($sklblOrder);
+            $article = $sklblOf->getArticle();
+            $client  = $sklblOf->getClient();
+
+            $countFilesTraite = $sklblFilesRepository->countFilesTraite($sklblOrder);
+            $countFilesNonTraite = $sklblFilesRepository->countFilesNonTraite($sklblOrder);
+
+
+            $countSkuNonTraited = $sklblSkuRepository->countSkuNonTraite($sklblOrder);
+            $countSkuTraited = $sklblSkuRepository->countSkuTraited($sklblOrder);
+
+            $countFxNonTraited = $sklblSkuRepository->countFxNonTraited($sklblOrder);
+            $countFxTraited = $sklblFxRepository->countFxTraited($sklblOrder);
+            
+            $countSku = $sklblSkuRepository->countSku($sklblOrder);
+            $produceQte = $sklblSkuRepository->countProduceQte($sklblOrder);
+
+            if($countFxNonTraited == 0 && $countFxTraited > 0 && $countFilesTraite > 0 && $countFilesNonTraite == 0){
+                $activateBtnTransfert = true;
+            }else{
+                $activateBtnTransfert = false;
+            }
+            
+            //dd($sklblFx);
+            return $this->render('sklbl/scalabel/step4.html.twig', [
+                'sklblFx' => $sklblFx,
+                'sklblOrder' => $sklblOrder,
+                'sklblOf' => $sklblOf,
+                'sklblFiles' => $sklblFiles,
+                'article' => $article,
+                'client' => $client,
+                'produce_qte' => $produceQte,
+                'countFilesNonTraite' => $countFilesNonTraite,
+                'countFilesTraite' => $countFilesTraite,
+                'countSkuNonTraited' => $countSkuNonTraited,
+                'countSkuTraited' => $countSkuTraited,
+                'countFxNonTraited' => $countFxNonTraited,
+                'countFxTraited' => $countFxTraited,
+                'count_sku' => $countSku,
+                'activateBtnTransfert' => $activateBtnTransfert
+            ]);
+    }
+
+    #[Route('/import_ofs/{order_id}', name: 'import_ofs')]
+    public function import_ofs(
+        SklblOrdersRepository $sklblOrdersRepository,
+        KernelInterface $kernel,
         int $order_id): Response
         {
         $sklblOrder = $sklblOrdersRepository->find($order_id);
-        $sklblOf = $sklblOfRepository->findOneBySklblOrder($sklblOrder);
-        $sklblFx = $sklblOf->getSklblFxs();
-        $article = $sklblOf->getArticle();
-        $client  = $sklblOf->getClient();
-        $countSku = $sklblSkuRepository->countSku($sklblOrder);
-        $produceQte = $sklblSkuRepository->countProduceQte($sklblOrder);
-        return $this->render('sklbl/scalabel/step4.html.twig', [
-            'sklblFx' => $sklblFx,
-            'sklblOrder' => $sklblOrder,
-            'sklblOf' => $sklblOf,
-            'article' => $article,
-            'client' => $client,
-            'produce_qte' => $produceQte,
-            'count_sku' => $countSku
+        $application = new Application($kernel);
+        $application->setAutoExit(false);
+
+        $input = new ArrayInput([
+                'command' => 'Sklbl:Import-ofs',
+                'dossier' => $sklblOrder->getDossier(),
+                'jalon' => 10,
+            ]);
+
+            // You can use NullOutput() if you don't need the output
+        $output = new BufferedOutput();
+        $application->run($input, $output);
+        return $this->redirectToRoute('sklbl_step_3', [
+            'order_id' => $order_id
+        ]);
+    }
+
+
+    #[Route('/confirmer_of/{order_id}/{of_id}', name: 'confirmer_of')]
+    public function confirmer_of(
+        SklblOrdersRepository $sklblOrdersRepository,
+        SklblOfRepository $sklblOfRepository,
+        SklblFilesRepository $sklblFilesRepository,
+        EntityManagerInterface $entityManager,
+        int $order_id,
+        int $of_id): Response
+        {
+        $sklblOrder = $sklblOrdersRepository->find($order_id);
+        $sklblOf = $sklblOfRepository->find($of_id);
+        $sklblFiles = $sklblFilesRepository->getFileNonTransfereList($sklblOrder);
+        foreach($sklblFiles as $sklblFile){
+            $sklblFile->setSklblOf($sklblOf);
+            $entityManager->persist($sklblFile);
+        }
+
+        $sklblOrder->setSklblStatus(3);
+        $entityManager->persist($sklblOrder);
+        $entityManager->flush();
+        return $this->redirectToRoute('sklbl_step_4', [
+            'order_id' => $order_id
         ]);
     }
 
@@ -430,35 +554,87 @@ class ScalabelController extends AbstractController
         SklblSkuRepository $sklblSkuRepository,
         SklblFilesRepository $sklblFilesRepository,
         EntityManagerInterface $entityManager,
+        MessageBusInterface $bus,
         int $of_id): Response
         {
         $sklblOf = $sklblOfRepository->find($of_id);
         $sklblOrder = $sklblOf->getSklblOrder();
-        $sklblFiles = $sklblFilesRepository->find($sklblOrder->getId());
-        $skus = $sklblSkuRepository->findBySklblOrder($sklblOrder);
-        foreach($skus as $sku){
-            $indice_sku = 0;
-            while($indice_sku < $sku->getProduceQte())
-            {
-                $fx = new SklblFx();
-                $fx->setSklblOrder($sklblOrder);
-                $fx->setSklblOf($sklblOf);
-                $fx->setSklblFile($sklblFiles);
-                $fx->setSklblSku($sku);
-                $fx->setStatus(0);
-                $currentDate = new DateTimeImmutable();
-                $fx->setUpdatedAt($currentDate);
-                $entityManager->persist($fx);
-                $entityManager->flush($fx);
-                $indice_sku++;
-            }
-
-        }
+        $sklblFiles = $sklblFilesRepository->getFileNonTransfereList($sklblOrder);
+       
+        foreach($sklblFiles as $file){
+            $bus->dispatch(new SklblStep41Service($file->getId()));
+        }  
 
         return $this->redirectToRoute('sklbl_step_4', [
             'order_id' => $sklblOrder->getId()
         ]);
     }
+
+
+    #[Route('/ask_transfert/{of_id}', name: 'ask_transfert')]
+    public function ask_transfert(
+        SklblOfRepository $sklblOfRepository,
+        SklblSkuRepository $sklblSkuRepository,
+        SklblFilesRepository $sklblFilesRepository,
+        EntityManagerInterface $entityManager,
+        MessageBusInterface $bus,
+        int $of_id): Response
+        {
+        $sklblOf = $sklblOfRepository->find($of_id);
+        $sklblOrder = $sklblOf->getSklblOrder();
+        $sklblFiles = $sklblFilesRepository->getFileATransfereList($sklblOrder);
+
+        foreach($sklblFiles as $fileU){
+            // Debut du futur bus
+            $sklblStep42Service = new SklblStep42Service($fileU->getId());
+            $fileRepository = $entityManager->getRepository(SklblFiles::class);
+            $file = $fileRepository->find($sklblStep42Service->getIdFile());
+            $sklblSkuRepository = $entityManager->getRepository(sklblSku::class);
+            $skus = $sklblSkuRepository->getSkuATransfereListByFile($file);
+            $sklblFxRepository = $entityManager->getRepository(sklblFx::class);
+            $excel = new SklblExcelService();
+            $filename = $excel->createNewF1($file,$this->getParameter('sklbl_scalabel_f1_directory'));
+
+            dd($filename);
+           /* if(sizeof($skus) > 0){
+                foreach($skus as $sku){
+                    $fxs =  $sklblFxRepository->getFxATransfereListBySku($sku);
+                    if(sizeof($fxs) > 0){
+                        foreach($fxs as $fx){
+
+                        }
+                    }
+                }
+            }*/
+
+
+            // Fin du futur bus
+        }  
+
+        return $this->redirectToRoute('sklbl_step_4', [
+            'order_id' => $sklblOrder->getId()
+        ]);
+    }
+
+    #[Route('/generate_f1_test', name: 'generate_f1_test')]
+    public function generate_f1_test(Request $request, MessageBusInterface $bus)
+    {
+        // ...
+
+        // SendNotificationHandler sera automatiquement appelé
+        $context = array();
+        $bus->dispatch(new SendNotification(
+            'no-reply@neyret.com',
+            'fdavoine@neyret.com',
+            'Mail test',
+            'test',
+            'test',
+            $context
+        ));
+        return $this->redirectToRoute('sklbl_index');
+    }
+
+ 
 
 
 
@@ -694,7 +870,14 @@ class ScalabelController extends AbstractController
     }
 
 
-   
+    protected function getParameter(string $name): array|bool|string|int|float|\UnitEnum|null
+    {
+        if (!$this->container->has('parameter_bag')) {
+            throw new ServiceNotFoundException('parameter_bag.', null, null, [], sprintf('The "%s::getParameter()" method is missing a parameter bag to work properly. Did you forget to register your controller as a service subscriber? This can be fixed either by using autoconfiguration or by manually wiring a "parameter_bag" in the service locator passed to the controller.', static::class));
+        }
+
+        return $this->container->get('parameter_bag')->get($name);
+    }
 
 
 

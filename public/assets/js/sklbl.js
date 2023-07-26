@@ -20,12 +20,15 @@ $(document).ready(function () {
             window.location.replace("/sklbl/step_1/"+data[0]); 
         }
         if(data[2] == 1){
-            window.location.replace("/sklbl/step_2/"+data[0]); 
+            window.location.replace("/sklbl/step_1/"+data[0]); 
         }
         if(data[2] == 2){
-            window.location.replace("/sklbl/step_3/"+data[0]); 
+            window.location.replace("/sklbl/step_2/"+data[0]); 
         }
         if(data[2] == 3){
+            window.location.replace("/sklbl/step_3/"+data[0]); 
+        }
+        if(data[2] == 4 ||data[2] == 5 ||data[2] == 6 ||data[2] == 7 ||data[2] == 8||data[2] == 9||data[2] == 10||data[2] == 11){
             window.location.replace("/sklbl/step_4/"+data[0]); 
         }
 

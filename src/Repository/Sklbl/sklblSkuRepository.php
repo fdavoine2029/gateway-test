@@ -114,9 +114,9 @@ class sklblSkuRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('u')
             ->select('COUNT(DISTINCT u.id)')
             ->where('u.sklblOrder = :orderId')
-            ->andWhere('u.status = :status')
+            ->andWhere('u.status < :status')
             ->setParameter('orderId', $order)
-            ->setParameter('status', 1)
+            ->setParameter('status', 3)
             ->getQuery()
             ->getSingleScalarResult();
     }
@@ -127,10 +127,45 @@ class sklblSkuRepository extends ServiceEntityRepository
             ->where('u.sklblOrder = :orderId')
             ->andWhere('u.status = :status')
             ->setParameter('orderId', $order)
+            ->setParameter('status', 3)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countSkuAttenteTransfert($order){
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(DISTINCT u.id)')
+            ->where('u.sklblOrder = :orderId')
+            ->andWhere('u.status = :status')
+            ->setParameter('orderId', $order)
+            ->setParameter('status', 3)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countStep4AGenerer($file){
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(DISTINCT u.id)')
+            ->where('u.sklblFile = :fileId')
+            ->andWhere('u.status = :status')
+            ->setParameter('fileId', $file)
             ->setParameter('status', 2)
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    public function countStep4Genere($file){
+        return $this->createQueryBuilder('u')
+        ->select('COUNT(DISTINCT u.id)')
+        ->where('u.sklblFile = :fileId')
+        ->andWhere('u.status = :status')
+        ->setParameter('fileId', $file)
+        ->setParameter('status', 3)
+        ->getQuery()
+        ->getSingleScalarResult();
+    }
+
+    
 
 
     public function getSkuList(SklblOrders $sklblOrder){
@@ -179,22 +214,7 @@ class sklblSkuRepository extends ServiceEntityRepository
     /**
      * @return sklblSku[] Returns an array of sklblSku objects
      */
-    public function findNotGeneratedByFile($file): array
-    {
-        return $this->createQueryBuilder('s')
-            ->where('s.sklblFile = :sklblFile')
-            ->andWhere('s.status = :status')
-            ->setParameter('sklblFile', $file)
-            ->setParameter('status', 1)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-
-    /**
-     * @return sklblSku[] Returns an array of sklblSku objects
-     */
-    public function getSkuATransfereListByFile($file): array
+    public function findStep4AGenerer($file): array
     {
         return $this->createQueryBuilder('s')
             ->where('s.sklblFile = :sklblFile')
@@ -209,13 +229,29 @@ class sklblSkuRepository extends ServiceEntityRepository
     /**
      * @return sklblSku[] Returns an array of sklblSku objects
      */
-    public function getSkuStatus0List($order): array
+    public function findStep42ATransferer($file): array
+    {
+        return $this->createQueryBuilder('s')
+            ->where('s.sklblFile = :sklblFile')
+            ->andWhere('s.status = :status')
+            ->setParameter('sklblFile', $file)
+            ->setParameter('status', 3)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+
+    /**
+     * @return sklblSku[] Returns an array of sklblSku objects
+     */
+    public function getSkuStep1List($order): array
     {
         return $this->createQueryBuilder('s')
             ->andWhere('s.sklblOrder = :sklblOrder')
             ->andWhere('s.status = :status')
             ->setParameter('sklblOrder', $order)
-            ->setParameter('status', 0)
+            ->setParameter('status', 1)
             ->getQuery()
             ->getResult()
         ;
@@ -234,6 +270,18 @@ class sklblSkuRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult()
         ;
+    }
+
+    public function updateSkuFileStatut($file,$status){
+        return $this->createQueryBuilder('u')
+            ->update()
+            ->set('u.status', '?1')
+            ->setParameter(1, $status)
+            ->where('u.sklblFile = ?2')
+            ->setParameter(2, $file)
+            ->getQuery()
+            ->getSingleScalarResult()
+            ;
     }
 
 //    public function findOneBySomeField($value): ?sklblSku

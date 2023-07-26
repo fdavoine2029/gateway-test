@@ -8,27 +8,49 @@
             
         {% endif %}
         {% if sklblOrder.sklblStatus == 1 %}
+            <button type="button" class="btn btn-primary" onclick="step_1({{sklblOrder.id}})">Intégration fichier client</button>
+            <button type="button" class="btn btn-secondary" disabled>Calcul des quantités</button>
+            <button type="button" class="btn btn-secondary" disabled>Génération OF</button>
+            <button type="button" class="btn btn-secondary" disabled>Génération Fx</button>
+            
+        {% endif %}
+        {% if sklblOrder.sklblStatus == 2 %}
             <button type="button" class="btn btn-success"  onclick="step_1({{sklblOrder.id}})">Intégration fichier client</button>
             <button type="button" class="btn btn-primary"  onclick="step_2({{sklblOrder.id}})">Calcul des quantités</button>
             <button type="button" class="btn btn-secondary" disabled>Génération OF</button>
             <button type="button" class="btn btn-secondary" disabled>Génération Fx</button>
         {% endif %}
-        {% if sklblOrder.sklblStatus == 2 %}
+        {% if sklblOrder.sklblStatus == 3 %}
             <button type="button" class="btn btn-success"  onclick="step_1({{sklblOrder.id}})">Intégration fichier client</button>
             <button type="button" class="btn btn-success"  onclick="step_2({{sklblOrder.id}})">Calcul des quantités</button>
-            <button type="button" class="btn btn-primary"  onclick="step_3({{sklblOrder.id}})">Génération Fx</button>
-            <button type="button" class="btn btn-secondary" disabled>Génération FX/Azure</button>
+            <button type="button" class="btn btn-primary"  onclick="step_3({{sklblOrder.id}})">Génération OF</button>
+            <button type="button" class="btn btn-secondary" disabled>Génération FX</button>
         {% endif %}
-        {% if sklblOrder.sklblStatus == 3 %}
+        {% if sklblOrder.sklblStatus == 4 %}
+            <button type="button" class="btn btn-success"  onclick="step_1({{sklblOrder.id}})">Intégration fichier client</button>
+            <button type="button" class="btn btn-success"  onclick="step_2({{sklblOrder.id}})">Calcul des quantités</button>
+            <button type="button" class="btn btn-success"  onclick="step_3({{sklblOrder.id}})">Génération OF</button>
+            <button type="button" class="btn btn-primary"  onclick="step_4({{sklblOrder.id}})">Génération Fx</button>
+        {% endif %}
+        {% if sklblOrder.sklblStatus == 5 
+            or sklblOrder.sklblStatus == 6 
+            or sklblOrder.sklblStatus == 7 
+            or sklblOrder.sklblStatus == 8 
+            or sklblOrder.sklblStatus == 9 
+            or sklblOrder.sklblStatus == 10 
+            or sklblOrder.sklblStatus == 11%}
             <button type="button" class="btn btn-success"  onclick="step_1({{sklblOrder.id}})">Intégration fichier client</button>
             <button type="button" class="btn btn-success"  onclick="step_2({{sklblOrder.id}})">Calcul des quantités</button>
             <button type="button" class="btn btn-success"  onclick="step_3({{sklblOrder.id}})">Génération OF</button>
             <button type="button" class="btn btn-primary"  onclick="step_4({{sklblOrder.id}})">Génération Fx</button>
         {% endif %}
 
-        
-        <button type="button" class="btn btn-secondary" disabled>Segepar</button>
+
         <button type="button" class="btn btn-secondary" disabled>Lisage</button>
+        <button type="button" class="btn btn-secondary" disabled>CheckLabel</button>
+        <button type="button" class="btn btn-secondary" disabled>Segepar</button>
+        <button type="button" class="btn btn-secondary" disabled>Vérification</button>
+        <button type="button" class="btn btn-secondary" disabled>Affiliation</button>
         
     </div>
 </div>

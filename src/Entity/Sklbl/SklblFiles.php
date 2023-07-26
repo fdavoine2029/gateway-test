@@ -27,26 +27,6 @@ class SklblFiles
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $categorie = null;
 
-    #[ORM\Column(length: 3, nullable: true)]
-    private ?string $vendorColumn = null;
-
-    #[ORM\Column(length: 3, nullable: true)]
-    private ?string $skuColumn = null;
-
-    #[ORM\Column(length: 3)]
-    private ?string $qteColumn = null;
-
-    #[ORM\Column]
-    private ?bool $deleteSku = null;
-
-    #[ORM\Column]
-    private ?int $ligne = null;
-
-    #[ORM\Column(length: 3, nullable: true)]
-    private ?string $idColumn = null;
-
-    #[ORM\Column(length: 3, nullable: true)]
-    private ?string $skuTisseColumn = null;
 
     #[ORM\OneToMany(mappedBy: 'sklblFile', targetEntity: SklblFx::class)]
     private Collection $sklblFxs;
@@ -57,10 +37,21 @@ class SklblFiles
     #[ORM\Column]
     private ?int $status = null;
 
+    #[ORM\OneToMany(mappedBy: 'sklblFile', targetEntity: SklblFx2::class)]
+    private Collection $sklblFx2s;
+
+    #[ORM\OneToMany(mappedBy: 'sklblCustfileId', targetEntity: SklblFx2::class)]
+    private Collection $sklblCustFx2s;
+
+    #[ORM\Column]
+    private ?int $ligne = null;
+
     public function __construct()
     {
         $this->sklblFxs = new ArrayCollection();
         $this->sklblSkus = new ArrayCollection();
+        $this->sklblFx2s = new ArrayCollection();
+        $this->sklblCustFx2s = new ArrayCollection();
     }
 
     public function getId(): ?string
@@ -122,90 +113,7 @@ class SklblFiles
         return $this;
     }
 
-    public function getVendorColumn(): ?string
-    {
-        return $this->vendorColumn;
-    }
-
-    public function setVendorColumn(?string $vendorColumn): static
-    {
-        $this->vendorColumn = $vendorColumn;
-
-        return $this;
-    }
-
-    public function getSkuColumn(): ?string
-    {
-        return $this->skuColumn;
-    }
-
-    public function setSkuColumn(?string $skuColumn): static
-    {
-        $this->skuColumn = $skuColumn;
-
-        return $this;
-    }
-
-    public function getQteColumn(): ?string
-    {
-        return $this->qteColumn;
-    }
-
-    public function setQteColumn(string $qteColumn): static
-    {
-        $this->qteColumn = $qteColumn;
-
-        return $this;
-    }
-
-
-    public function isDeleteSku(): ?bool
-    {
-        return $this->deleteSku;
-    }
-
-    public function setDeleteSku(bool $deleteSku): static
-    {
-        $this->deleteSku = $deleteSku;
-
-        return $this;
-    }
-
-    public function getLigne(): ?int
-    {
-        return $this->ligne;
-    }
-
-    public function setLigne(int $ligne): static
-    {
-        $this->ligne = $ligne;
-
-        return $this;
-    }
-
-    public function getIdColumn(): ?string
-    {
-        return $this->idColumn;
-    }
-
-    public function setIdColumn(?string $idColumn): static
-    {
-        $this->idColumn = $idColumn;
-
-        return $this;
-    }
-
-    public function getSkuTisseColumn(): ?string
-    {
-        return $this->skuTisseColumn;
-    }
-
-    public function setSkuTisseColumn(string $skuTisseColumn): static
-    {
-        $this->skuTisseColumn = $skuTisseColumn;
-
-        return $this;
-    }
+    
 
     /**
      * @return Collection<int, SklblFx>
@@ -278,4 +186,78 @@ class SklblFiles
 
         return $this;
     }
+
+    public function getLigne(): ?int
+    {
+        return $this->ligne;
+    }
+
+    public function setLigne(int $ligne): static
+    {
+        $this->ligne = $ligne;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<string, SklblFx2>
+     */
+    public function getSklblFx2s(): Collection
+    {
+        return $this->sklblFx2s;
+    }
+
+    public function addSklblFx2(SklblFx2 $sklblFx2): static
+    {
+        if (!$this->sklblFx2s->contains($sklblFx2)) {
+            $this->sklblFx2s->add($sklblFx2);
+            $sklblFx2->setSklblFile($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSklblFx2(SklblFx2 $sklblFx2): static
+    {
+        if ($this->sklblFx2s->removeElement($sklblFx2)) {
+            // set the owning side to null (unless already changed)
+            if ($sklblFx2->getSklblFile() === $this) {
+                $sklblFx2->setSklblFile(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, SklblFx2>
+     */
+    public function getSklblCustFx2s(): Collection
+    {
+        return $this->sklblCustFx2s;
+    }
+
+    public function addSklblCustFx2(SklblFx2 $sklblCustFx2): static
+    {
+        if (!$this->sklblCustFx2s->contains($sklblCustFx2)) {
+            $this->sklblCustFx2s->add($sklblCustFx2);
+            $sklblCustFx2->setSklblCustfile($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSklblCustFx2(SklblFx2 $sklblCustFx2): static
+    {
+        if ($this->sklblCustFx2s->removeElement($sklblCustFx2)) {
+            // set the owning side to null (unless already changed)
+            if ($sklblCustFx2->getSklblCustfile() === $this) {
+                $sklblCustFx2->setSklblCustfile(null);
+            }
+        }
+
+        return $this;
+    }
+
+
 }

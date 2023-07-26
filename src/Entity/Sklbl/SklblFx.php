@@ -4,6 +4,8 @@ namespace App\Entity\Sklbl;
 
 use App\Entity\Articles;
 use App\Repository\Sklbl\SklblFxRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SklblFxRepository::class)]
@@ -47,6 +49,14 @@ class SklblFx
 
     #[ORM\ManyToOne(inversedBy: 'sklbkFxs')]
     private ?SklblOrders $sklblOrder = null;
+
+    #[ORM\OneToMany(mappedBy: 'SklblFx', targetEntity: SklblFx2::class)]
+    private Collection $sklblFx2s;
+
+    public function __construct()
+    {
+        $this->sklblFx2s = new ArrayCollection();
+    }
 
     
 
@@ -178,5 +188,36 @@ class SklblFx
         return $this;
     }
 
+    /**
+     * @return Collection<string, SklblFx2>
+     */
+    public function getSklblFx2s(): Collection
+    {
+        return $this->sklblFx2s;
+    }
+
+    public function addSklblFx2(SklblFx2 $sklblFx2): static
+    {
+        if (!$this->sklblFx2s->contains($sklblFx2)) {
+            $this->sklblFx2s->add($sklblFx2);
+            $sklblFx2->setSklblFx($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSklblFx2(SklblFx2 $sklblFx2): static
+    {
+        if ($this->sklblFx2s->removeElement($sklblFx2)) {
+            // set the owning side to null (unless already changed)
+            if ($sklblFx2->getSklblFx() === $this) {
+                $sklblFx2->setSklblFx(null);
+            }
+        }
+
+        return $this;
+    }
+
+    
 
 }

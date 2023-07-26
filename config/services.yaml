@@ -5,8 +5,17 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     app.jwtsecret: '%env(JWT_SECRET)%'
-    sklbl_client_file_directory: '%kernel.project_dir%/public/sklbl/uploads/clients'
-    sklbl_scalabel_f1_directory: '%kernel.project_dir%/public/sklbl/uploads/scalabel_f1'
+    sklbl_fichier_client_a_charger: '%kernel.project_dir%/public/sklbl/uploads/clients/A_charger'
+    sklbl_fichier_client_error: '%kernel.project_dir%/public/sklbl/uploads/clients/Error'
+    sklbl_fichier_client_success: '%kernel.project_dir%/public/sklbl/uploads/clients/Success'
+    sklbl_f1_directory: '%kernel.project_dir%/public/sklbl/uploads/scalabel_f1/Genere'
+    sklbl_f1_a_transferer_directory: '%kernel.project_dir%/public/sklbl/uploads/scalabel_f1/A_transferer'
+    sklbl_f1_transfere_directory: '%kernel.project_dir%/public/sklbl/uploads/scalabel_f1/transfere'
+    sklbl_f2_directory: '%kernel.project_dir%/public/sklbl/uploads/scalabel_f2/Recu'
+    sklbl_f2_en_traitement_directory: '%kernel.project_dir%/public/sklbl/uploads/scalabel_f2/En_Traitement'
+    sklbl_f2_traite_directory: '%kernel.project_dir%/public/sklbl/uploads/scalabel_f2/Traite'
+    sklbl_f2_archive_directory: '%kernel.project_dir%/public/sklbl/uploads/scalabel_f2/Archive'
+    sklbl_f2_error_directory: '%kernel.project_dir%/public/sklbl/uploads/scalabel_f2/Error'
 services:
     # default configuration for services in *this* file
     _defaults:

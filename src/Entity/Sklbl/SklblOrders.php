@@ -76,12 +76,17 @@ class SklblOrders
     #[ORM\OneToMany(mappedBy: 'sklblOrder', targetEntity: SklblFx::class)]
     private Collection $sklbkFxs;
 
+    #[ORM\OneToMany(mappedBy: 'sklblOrder', targetEntity: SklblUploadConfig::class)]
+    private Collection $sklblUploadConfigs;
+
+
     public function __construct()
     {
         $this->sklblOfs = new ArrayCollection();
         $this->sklblFiles = new ArrayCollection();
         $this->sklblSkus = new ArrayCollection();
         $this->sklbkFxs = new ArrayCollection();
+        $this->sklblUploadConfigs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -393,5 +398,36 @@ class SklblOrders
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, SklblUploadConfig>
+     */
+    public function getSklblUploadConfigs(): Collection
+    {
+        return $this->sklblUploadConfigs;
+    }
+
+    public function addSklblUploadConfig(SklblUploadConfig $sklblUploadConfig): static
+    {
+        if (!$this->sklblUploadConfigs->contains($sklblUploadConfig)) {
+            $this->sklblUploadConfigs->add($sklblUploadConfig);
+            $sklblUploadConfig->setSklblOrder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSklblUploadConfig(SklblUploadConfig $sklblUploadConfig): static
+    {
+        if ($this->sklblUploadConfigs->removeElement($sklblUploadConfig)) {
+            // set the owning side to null (unless already changed)
+            if ($sklblUploadConfig->getSklblOrder() === $this) {
+                $sklblUploadConfig->setSklblOrder(null);
+            }
+        }
+
+        return $this;
+    }
+
  
 }

@@ -42,15 +42,6 @@
         </div>
         <div class="row pt-2">
             <div class="col-1"></div>
-            <div class="col-11">
-            <b>Fichiers clients correspondants:</b> 
-                {% for files in sklblFiles %}
-                    <br/>{{ files.clientFilename }}
-                {% endfor %}
-            </div>
-        </div>
-        <div class="row pt-2">
-            <div class="col-1"></div>
             
             {% if activateBtnTransfert %}
                 <div class="col-3"><button type="button" onclick="generate_f1({{ sklblOf.id }})" class="btn btn-success mt-2">Générer les enregistrements</button></div>
@@ -73,51 +64,147 @@
                 <table id="fxsum_table" class="display border" style="width:100%;font-size: 0.8em">
                     <thead>
                         <tr>
-                            <th>Elements</th>
-                            <th>A traiter</th>
-                            <th>Traités</th>
-                            <th>En attente transfert</th>
+                            <th>Fichier</th>
+                            <th>Categorie</th>
+                            <th>Lots références</th>
+                            <th>Lots Générés</th>
+                            <th>Prets</th>
                             <th>Transférés</th>
-                            <th>Réceptionnés</th>
+                            <th>Receptionnés</th>
+                            <th>Rapprochés</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
+                    {% for file in sklblFiles %}
                         <tr>
-                            <th>Fichiers</th>
-                            {% if countFilesNonTraite == 0 %}
-                                <th>{{ countFilesTraite }}</th>
-                                {% else %}
-                                <th>{{ countFilesNonTraite }}</th>
+                            {% if file.categorie == "Customer file" %}
+                                {% if file.status == 1 %}
+                                    <th class="alert alert-info"> {{ file.client_filename }} </th>
+                                    <th class="alert alert-info"> {{ file.categorie }} </th>
+                                    <th class="alert alert-info">{{ file.total_sku }}</th>
+                                    <th class="alert alert-info">{{ file.genere_sku }}</th>
+                                    <th class="alert alert-info">{{ file.pret_au_transfert_sku }}</th>
+                                    <th class="alert alert-info">{{ file.transfere_sku }}</th>
+                                    <th class="alert alert-info">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-info">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-info">Enregistrements à générer..</th>
+                                {% elseif file.status == 2 %}
+                                    <th class="alert alert-warning"> {{ file.client_filename }} </th>
+                                    <th class="alert alert-warning"> {{ file.categorie }} </th>
+                                    <th class="alert alert-warning">{{ file.total_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.genere_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.pret_au_transfert_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.transfere_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-warning">En cours de génération..</th>
+                                {% elseif file.status == 3 %}
+                                    <th class="alert alert-success"> {{ file.client_filename }} </th>
+                                    <th class="alert alert-success"> {{ file.categorie }} </th>
+                                    <th class="alert alert-success">{{ file.total_sku }}</th>
+                                    <th class="alert alert-success">{{ file.genere_sku }}</th>
+                                    <th class="alert alert-success">{{ file.pret_au_transfert_sku }}</th>
+                                    <th class="alert alert-success">{{ file.transfere_sku }}</th>
+                                    <th class="alert alert-success">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-success">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-success">Enregistrements générés</th>
+                                {% elseif file.status == 4 %}
+                                    <th class="alert alert-warning"> {{ file.client_filename }} </th>
+                                    <th class="alert alert-warning"> {{ file.categorie }} </th>
+                                    <th class="alert alert-warning">{{ file.total_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.genere_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.pret_au_transfert_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.transfere_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-warning">En attente transfert..</th>
+                                {% elseif file.status == 5 %}
+                                    <th class="alert alert-warning"> {{ file.client_filename }} </th>
+                                    <th class="alert alert-warning"> {{ file.categorie }} </th>
+                                    <th class="alert alert-warning">{{ file.total_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.genere_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.pret_au_transfert_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.transfere_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-warning">Transfert en cours..</th>
+                                {% elseif file.status == 6 %}
+                                    <th class="alert alert-warning"> {{ file.client_filename }} </th>
+                                    <th class="alert alert-warning"> {{ file.categorie }} </th>
+                                    <th class="alert alert-warning">{{ file.total_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.genere_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.pret_au_transfert_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.transfere_sku }}</th>
+                                    <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
+                                    <th class="alert alert-warning">En attente envoi..</th>
+                                {% elseif file.status == 7 %}
+                                    <th class="alert alert-success"> {{ file.client_filename }} </th>
+                                    <th class="alert alert-success"> {{ file.categorie }} </th>
+                                    <th class="alert alert-success">{{ file.total_sku }}</th>
+                                    <th class="alert alert-success">{{ file.genere_sku }}</th>
+                                    <th class="alert alert-success">{{ file.pret_au_transfert_sku }}</th>
+                                    <th class="alert alert-success">{{ file.transfere_sku }}</th>
+                                    
+                                    {% if file.rapproche_fx ==  file.transfere_sku %}
+                                        <th class="alert alert-success">{{ file.rapproche_fx }}</th>
+                                        <th class="alert alert-success">{{ file.rapproche_fx }}</th>
+                                        {% else %}
+                                        <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
+                                        <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
+                                    {% endif %}
+                                    
+                                    <th class="alert alert-success">Transféré..</th>
+                                    {% else %}
+                                    <th class="alert alert-warning"> {{ file.client_filename }} </th>
+                                    <th class="alert alert-warning"> {{ file.categorie }} </th>
+                                    <th>{{ file.genere_sku }}/{{ file.total_sku }}</th>
+                                    <th>{{ file.pret_au_transfert_sku }}</th>
+                                    <th>{{ file.transfere_sku }}</th>
+                                    <th>Na</th>
+                                    <th></th>
+                                    <th class="alert alert-warning">Inconnu..</th>
+
+                                {% endif %}
                             {% endif %}
-                            <th>{{ countFilesTraite }}</th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                        <tr>
-                            <th>Sku</th>
-                            {% if countSkuNonTraited == 0 %}
-                                <th>{{ countSkuTraited }}</th>
-                                {% else %}
-                                <th>{{ countSkuNonTraited }}</th>
+                            {% if file.categorie == "fx2" %}
+                            {% if file.status == 1 %}
+                                        <th class="alert alert-info"> {{ file.client_filename }} </th>
+                                        <th class="alert alert-info"> {{ file.categorie }} </th>
+                                        <th class="alert alert-info">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-info">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-info">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-info">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-info">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-info">{{ file.rapproche_fx2 }}</th>
+                                        <th class="alert alert-info">En reception...</th>
+                                {% elseif file.status == 2 %}
+                                        <th class="alert alert-info"> {{ file.client_filename }} </th>
+                                        <th class="alert alert-info"> {{ file.categorie }} </th>
+                                        <th class="alert alert-info">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-info">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-info">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-info">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-info">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-info">{{ file.rapproche_fx2 }}</th>
+                                        <th class="alert alert-info">En reception...</th>
+
+                                        {% elseif file.status == 3 %}
+
+                                        <th class="alert alert-success"> {{ file.client_filename }} </th>
+                                        <th class="alert alert-success"> {{ file.categorie }} </th>
+                                        <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-success">{{ file.rapproche_fx2 }}</th>
+                                        <th class="alert alert-success">Receptionné...</th>
+                                    {% endif %}
                             {% endif %}
-                            <th>{{ countSkuTraited }}</th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
                         </tr>
-                        <tr>
-                            <th>Enregistrements</th>
-                            {% if countFxNonTraited == 0 %}
-                                <th>{{ countFxTraited }}</th>
-                                {% else %}
-                                <th>{{ countFxNonTraited }}</th>
-                            {% endif %}
-                            <th>{{ countFxTraited }}</th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                        </tr>
+                    {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -134,6 +221,11 @@
                     <tr>
                         <th>Lot (sku)</th>
                         <th>A tisser</th>
+                        {% for column in columns %}
+                            {% if column.num > 5 and column.num < 9 %}
+                                    <th>{{ column.columnLabel }}</th>                            
+                            {% endif %}
+                        {% endfor %}
                         <th>Identifiant unique</th>
                         <th>Url</th>
                         <th>Envoyé le</th>
@@ -147,6 +239,19 @@
                     <tr>
                         <th> {{ fx['sku'] }}</th>
                         <th>{{ fx['sku_tisse'] }}</th>
+                        {% for column in columns %}
+                            {% if column.num > 5 and column.num < 9 %}
+                                {% if column.num == 6 %}
+                                        <th>{{ fx['opt_data1'] }}</th>                            
+                                {% endif %}
+                                {% if column.num == 7 %}
+                                        <th>{{ fx['opt_data2'] }}</th>                            
+                                {% endif %}
+                                {% if column.num == 8 %}
+                                        <th>{{ fx['opt_data3'] }}</th>                            
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
                         <th>{{ fx['unique_id'] }}</th>
                         <th>{{ fx['redirect_url'] }}</th>
                         <th>{{ fx['sent_on'] }}</th>
@@ -160,6 +265,11 @@
                     <tr>
                         <th>Lot (sku)</th>
                         <th>A tisser</th>
+                        {% for column in columns %}
+                            {% if column.num > 5 and column.num < 9 %}
+                                    <th>{{ column.columnLabel }}</th>                            
+                            {% endif %}
+                        {% endfor %}
                         <th>Identifiant unique</th>
                         <th>Url</th>
                         <th>Envoyé le</th>

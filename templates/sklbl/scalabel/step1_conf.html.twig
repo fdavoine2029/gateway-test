@@ -1,0 +1,79 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Scalabel - Commandes{% endblock %}
+
+{% block body %}
+
+ {% block stylesheets %}
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet"/>
+ {% endblock %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('assets/js/sklbl_menu.js')}}"></script>
+    <script src="{{ asset('assets/js/sklbl_step1_conf.js')}}"></script>
+{% endblock %}
+
+<main class="container-fluid">
+    <section class="row">
+    <h3> Scalabel - Commandes {{sklblOrder.orderNum}} du client {{client.name}}</h3>
+    <div class="container">
+    <div class="btn-group" role="group" aria-label="Un groupe de boutons">
+            <button type="button" class="btn btn-secondary" onclick="step_1({{sklblOrder.id}})">Retour au chargement</button>
+    </div
+
+    <fieldset class="border p-2">
+        <legend  class="float-none w-auto p-2">Configuration des colonnes</legend>
+       {{ form_start(form) }}
+         {% set row = 1 %}
+         {% for column in form %}
+            <div class="row">
+                {% set col = 1 %}
+                {% for field in column %}
+                    <div class="col-2">
+                        {{ form_label(field) }}
+                        {{ form_errors(field) }}
+                        {% if col == 1%}
+                            {{ form_widget(field, { 'attr': {'readonly': true}}) }}
+                        {% else %}
+                            {% if row < 6 and col < 3%}
+                                {{ form_widget(field, { 'attr': {'readonly': true}}) }}
+                                {% else %}
+                                {{ form_widget(field) }}
+                            {% endif %}
+                        {% endif %}
+                        
+                        
+                    </div>
+                    {% set col = col + 1 %}
+                {% endfor %}
+            </div>
+            {% set row = row + 1 %}
+            {% endfor %}
+        <div class="row">
+            
+            {% if nbColumn < 15 %}
+                <div class="col-1"><button type="button" onclick="step1_conf_addColumn({{sklblOrder.id}},{{nbColumn}})" class="btn btn-success mt-2">Ajouter</button></div>
+            {% endif %}
+            {% if nbColumn > 5 %}
+                <div class="col-1"><button type="button" onclick="step1_conf_deletecolumn({{sklblOrder.id}},{{nbColumn}})" class="btn btn-danger mt-2">Retirer</button></div>
+            {% endif %}
+            <div class="col-4"></div>
+            <div class="col-4"></div>
+       </div>
+       <div class="row">
+        <div class="col-4"></div>
+        <div class="col-4"><button type="submit" class="btn btn-primary mt-2">Enregistrer la configuration</button></div>
+        <div class="col-4"></div>
+            
+       </div>
+       
+       {{ form_end(form) }}
+       
+        
+        
+    </fieldset>
+
+
+{% endblock %}

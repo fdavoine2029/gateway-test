@@ -112,10 +112,14 @@ class SklblOf
     #[ORM\OneToMany(mappedBy: 'sklblOf', targetEntity: SklblFx::class, orphanRemoval: true)]
     private Collection $sklblFxs;
 
+    #[ORM\OneToMany(mappedBy: 'sklblOf', targetEntity: SklblFx2::class)]
+    private Collection $sklblFx2s;
+
     public function __construct()
     {
         $this->sklblFiles = new ArrayCollection();
         $this->sklblFxs = new ArrayCollection();
+        $this->sklblFx2s = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -532,6 +536,36 @@ class SklblOf
            // set the owning side to null (unless already changed)
            if ($sklblFx->getSklblOf() === $this) {
                $sklblFx->setSklblOf(null);
+           }
+       }
+
+       return $this;
+   }
+
+   /**
+    * @return Collection<int, SklblFx2>
+    */
+   public function getSklblFx2s(): Collection
+   {
+       return $this->sklblFx2s;
+   }
+
+   public function addSklblFx2(SklblFx2 $sklblFx2): static
+   {
+       if (!$this->sklblFx2s->contains($sklblFx2)) {
+           $this->sklblFx2s->add($sklblFx2);
+           $sklblFx2->setSklblOf($this);
+       }
+
+       return $this;
+   }
+
+   public function removeSklblFx2(SklblFx2 $sklblFx2): static
+   {
+       if ($this->sklblFx2s->removeElement($sklblFx2)) {
+           // set the owning side to null (unless already changed)
+           if ($sklblFx2->getSklblOf() === $this) {
+               $sklblFx2->setSklblOf(null);
            }
        }
 

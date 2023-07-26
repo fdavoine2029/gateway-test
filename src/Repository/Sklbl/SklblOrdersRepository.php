@@ -72,6 +72,17 @@ class SklblOrdersRepository extends ServiceEntityRepository
         ;
     }
 
+
+    public function getCurrentOrders(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.status <= :status')
+            ->setParameter('status', 10)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
 //    /**
 //     * @return SklblOrders[] Returns an array of SklblOrders objects
 //     */

@@ -22,59 +22,57 @@
 
         <fieldset class="border p-2">
             <legend  class="float-none w-auto p-2">Paramétrage</legend>
+            <div class="row">
+                <div class="col-1"></div>
+                <div class="col-11">
+                    <button type="button" onclick="step1_conf_column({{ sklblOrder.id }},5)" class="btn btn-success mt-2">Configurer des colonnes</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-1"></div>
+                <div class="col-10">
+                    <table id="fx_step1_column" class="display border" style="width:100%;font-size: 0.8em">
+                        <thead>
+                            <tr>
+                                <th>Données</th>
+                                <th>Colonne du CSV</th>
+                                <th>Lisage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for column in columns %}
+                            <tr>
+                                <td>{{ column.columnLabel }}</td>
+                                <td>{{ column.columnCsv }}</td>
+                                {% if column.lisage == 1 %}
+                                    <td>Oui</td>
+                                {% else %}
+                                    <td>Non</td>
+                                {% endif %}
+                                
+                            </tr>
+                        {% endfor %}
+                            
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-1"></div>
+            </div>
+            
             <section class="row">
                 <div class="col-1"></div>
                 <div class="col-11">
-                    Veuillez indiquer les colonnes par leur lettre de la feuille Excel du client correspondants aux données à charger:
                 </div>
             </section>
-            {{ form_start(fileForm) }}
-            <div class="row">
-                <div class="col-1"></div>
-                <div class="col-2">
-                    {{ form_label(fileForm.idColumn) }}
-                    {{ form_errors(fileForm.idColumn) }}
-                    {{ form_widget(fileForm.idColumn,{
-                            value: columnId
-                        }) }}
-                </div>
-                <div class="col-2">
-                    {{ form_label(fileForm.vendorColumn) }}
-                    {{ form_errors(fileForm.vendorColumn) }}
-                    {{ form_widget(fileForm.vendorColumn,{
-                            value: columnVendor
-                        }) }}
-                </div>
-                <div class="col-2">
-                    {{ form_label(fileForm.skuColumn) }}
-                    {{ form_errors(fileForm.skuColumn) }}
-                    {{ form_widget(fileForm.skuColumn,{
-                            value: columnSku
-                        }) }}
-                </div>
-                <div class="col-2">
-                    {{ form_label(fileForm.skuTisseColumn) }}
-                    {{ form_errors(fileForm.skuTisseColumn) }}
-                    {{ form_widget(fileForm.skuTisseColumn,{
-                            value: columnSkuTisse
-                        }) }}
-                </div>
-                <div class="col-2">
-                    {{ form_label(fileForm.qteColumn) }}
-                    {{ form_errors(fileForm.qteColumn) }}
-                    {{ form_widget(fileForm.qteColumn,{
-                            value: columnQte
-                        }) }}
-                </div>
-                <div class="col-1"></div>
-                
-            </div>
+            
+            
             <div class="row pt-3">
                 <div class="col-1"></div>
                 <div class="col-11">
                     Veuillez sélectionner le fichier client:
                 </div>
             </div>
+            {{ form_start(fileForm) }}
             <div class="row">
                 <div class="col-1"></div>
                 <div class="col-6">
@@ -92,24 +90,58 @@
             </div>
             <div class="row">
                 <div class="col-4"></div>
-                <div class="col-2">
-                    <button type="submit" class="btn btn-primary mt-2">Lancer le chargement</button>
-                </div>
-                <div class="col-2 pt-3">
-                    {{ form_label(fileForm.deleteSku) }}
-                    {{ form_errors(fileForm.deleteSku) }}
-                    {{ form_widget(fileForm.deleteSku) }}
-                </div>
+                <div class="col-4"><button type="submit" class="btn btn-primary mt-2">Demander le chargement</button></div>
+                <div class="col-4"></div>
             </div>
             {{ form_end(fileForm) }}
         </fieldset>
         <fieldset class="border p-2">
+            <legend  class="float-none w-auto p-2">Chargement</legend>
+            <section class="row">
+            <div class="col-1"></div>
+            <div class="col-10">
+                <table id="fx_step1_table" class="display border" style="width:100%;font-size: 0.8em">
+                    <thead>
+                        <tr>
+                            <th>Fichier</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for file in files %}
+
+                        <tr>
+                            
+                            {% if file.status == 0 %}
+                                <th class="alert alert-warning"> {{ file.clientFilename }} </th>
+                                <th class="alert alert-warning">En attente chargement..</th>
+                            {% elseif file.status == 1 %}
+                                <th class="alert alert-success"> {{ file.clientFilename }} </th>
+                                <th class="alert alert-success">Succès</th>
+                            {% elseif file.status == -1 %}
+                                <th class="alert alert-danger"> {{ file.clientFilename }} </th>
+                                <th class="alert alert-danger">Error</th>
+                            {% endif %}
+                                <th><button type="button" onclick="delete_file({{ file.id }})" class="btn btn-danger mt-2">Supprimer</button></th>
+                            
+                        </tr>
+
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-1"></div>
+        </section>
+
+
+
+
+        </fieldset>    
+        <fieldset class="border p-2">
             <legend  class="float-none w-auto p-2">Résumé</legend>
                 <section class="row">
-                    <div class="col-1"></div>
-                    <div class="col-2">
-                        Nombre de fichiers: {{ nbfichiers }}
-                    </div>
+                    <div class="col-3"></div>
                     <div class="col-2">
                         Nombre de faconniers: {{ nbfaconnier }}
                     </div>
@@ -134,6 +166,12 @@
                                 <th>Id</th>
                                 <th>Lot (Sku)</th>
                                 <th>Variable à tisser</th>
+                                {% for column in columns %}
+                                    {% if column.num > 5 and column.num < 9 %}
+                                            <th>{{ column.columnLabel }}</th>                            
+                                    {% endif %}
+                                    
+                                {% endfor %}
                                 <th>Quantités commandées</th>
                                 <th>Fichier</th>
                                 <th>Status</th>
@@ -146,6 +184,19 @@
                                 <th>{{ sku.id }}</th>
                                 <th>{{ sku.sku }}</th>
                                 <th>{{ sku.sku_tisse }}</th>
+                                {% for column in columns %}
+                                    {% if column.num > 5 and column.num < 9 %}
+                                        {% if column.num == 6 %}
+                                                <th>{{ sku.opt_data1 }}</th>                            
+                                        {% endif %}
+                                        {% if column.num == 7 %}
+                                                <th>{{ sku.opt_data2 }}</th>                            
+                                        {% endif %}
+                                        {% if column.num == 8 %}
+                                                <th>{{ sku.opt_data3 }}</th>                            
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
                                 <th>{{ sku.order_qte }}</th>
                                 <th>{{ sku.client_filename }}</th>
                                 <th>{{ sku.status }}</th>
@@ -159,6 +210,11 @@
                                 <th>Id</th>
                                 <th>Lot (Sku)</th>
                                 <th>Variable à tisser</th>
+                                {% for column in columns %}
+                                    {% if column.num > 5 and column.num < 9 %}
+                                            <th>{{ column.columnLabel }}</th>                            
+                                    {% endif %}
+                                {% endfor %}
                                 <th>Quantités commandées</th>
                                 <th>Fichier</th>
                                 <th>Status</th>

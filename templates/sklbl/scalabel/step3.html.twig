@@ -25,7 +25,7 @@
                 <div class="col-1"></div>
                 <div class="col-11">
                 {% if exist %}
-                    Veuillez vérifier les informations de l'OF. {{ sklblOf.code }}
+                    Veuillez vérifier les informations de l'OF. {{ sklblOf.code }} <button type="button" id="import_ofs" onclick="import_ofs({{ sklblOrder.id }})" class="btn btn-primary mt-2">Actualiser</button>
                     {% else %}
                     Veuillez générer l'OF sous Divalto et cliquer sur actualiser.  <button type="button" id="import_ofs" onclick="import_ofs({{ sklblOrder.id }})" class="btn btn-primary mt-2">Actualiser</button>
                 {% endif %}

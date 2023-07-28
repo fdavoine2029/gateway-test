@@ -6,3 +6,9 @@ function step1_conf_deletecolumn(orderId,nbColumn) {
     nbColumn= nbColumn - 1;
     window.location.replace("/sklbl/step_1/configure_colum/"+orderId+"/"+nbColumn);
 }
+
+function step_conf_remove(orderId,field) {
+    alert(field)
+   // window.location.replace("/sklbl/step_1/configure_colum/"+orderId+"/"+nbColumn);
+}
+

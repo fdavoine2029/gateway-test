@@ -75,17 +75,9 @@
                     <table id="sku2_table" class="display" style="width:100%;font-size: 0.8em">
                         <thead>
                             <tr>
-                                <th>Façonnier</th>
-                                <th>Id</th>
-                                <th>Lot (Sku)</th>
-                                <th>Variable à tisser</th>
                                 {% for column in columns %}
-                                    {% if column.num > 5 and column.num < 9 %}
-                                            <th>{{ column.columnLabel }}</th>                            
-                                    {% endif %}
-                                    
+                                    <th>{{ column.label }}</th>                               
                                 {% endfor %}
-                                <th>Quantités commandées</th>
                                 <th>Quantités supplémentaire</th>
                                 <th>Quantités à produire</th>
                                 <th>Statut</th>
@@ -94,24 +86,14 @@
                         <tbody>
                         {% for sku in skus %}
                             <tr>
-                                <th>{{ sku.vendor }}</th>
-                                <th>{{ sku.id }}</th>
-                                <th>{{ sku.sku }}</th>
-                                <th>{{ sku.sku_tisse }}</th>
                                 {% for column in columns %}
-                                    {% if column.num > 5 and column.num < 9 %}
-                                        {% if column.num == 6 %}
-                                                <th>{{ sku.opt_data1 }}</th>                            
-                                        {% endif %}
-                                        {% if column.num == 7 %}
-                                                <th>{{ sku.opt_data2 }}</th>                            
-                                        {% endif %}
-                                        {% if column.num == 8 %}
-                                                <th>{{ sku.opt_data3 }}</th>                            
-                                        {% endif %}
+                                    {% if column.sklblStructure.name == "order_qte" %}
+                                            <th>{{ sku.order_qte }}</th>                            
                                     {% endif %}
+                                    {% if column.sklblStructure.name == "data1" %}<th>{{ sku.data1 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data2" %}<th>{{ sku.data2 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data3" %}<th>{{ sku.data3 }}</th>{% endif %}
                                 {% endfor %}
-                                <th>{{ sku.order_qte }}</th>
                                 <th>{{ sku.off_qte }}</th>
                                 <th>{{ sku.produce_qte }}</th>
                                 <th>{{ sku.status }}</th>
@@ -121,17 +103,9 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <th>Façonnier</th>
-                                <th>Id</th>
-                                <th>Lot (Sku)</th>
-                                <th>Variable à tisser</th>
                                 {% for column in columns %}
-                                    {% if column.num > 5 and column.num < 9 %}
-                                            <th>{{ column.columnLabel }}</th>                            
-                                    {% endif %}
-                                    
+                                    <th>{{ column.label }}</th>                               
                                 {% endfor %}
-                                <th>Quantités commandées</th>
                                 <th>Quantités supplémentaire</th>
                                 <th>Quantités à produire</th>
                                 <th>Statut</th>

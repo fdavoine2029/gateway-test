@@ -17,7 +17,7 @@ $(document).ready(function () {
      $('#ofs_table').on('click', 'tr', function () {
         var data = table.row(this).data();
         if(data[2] == 0){
-            window.location.replace("/sklbl/step_1/"+data[0]); 
+            window.location.replace("/sklbl/step_conf/"+data[0]+"/none"); 
         }
         if(data[2] == 1){
             window.location.replace("/sklbl/step_1/"+data[0]); 
@@ -30,6 +30,9 @@ $(document).ready(function () {
         }
         if(data[2] == 4 ||data[2] == 5 ||data[2] == 6 ||data[2] == 7 ||data[2] == 8||data[2] == 9||data[2] == 10||data[2] == 11){
             window.location.replace("/sklbl/step_4/"+data[0]); 
+        }
+        if(data[2] == 12){
+            window.location.replace("/sklbl/step_5/"+data[0]+"/1"); 
         }
 
         

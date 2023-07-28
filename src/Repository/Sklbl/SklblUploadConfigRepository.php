@@ -51,6 +51,49 @@ class SklblUploadConfigRepository extends ServiceEntityRepository
         ;
     }
 
+    public function countVariable($order){
+        return $this->createQueryBuilder('u')
+        ->select('COUNT(DISTINCT u.id)')
+        ->where('u.sklblOrder = :order')
+        ->andWhere('u.categorie = :categorie')
+        ->setParameter('order', $order)
+        ->setParameter('categorie', 'variable')
+        ->getQuery()
+        ->getSingleScalarResult();
+    }
+
+    public function findConf($order,$name,$variable)
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->andWhere('s.name = :name')
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('sklblOrder', $order)
+            ->setParameter('name', $name)
+            ->setParameter('categorie', $variable)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
+    /**
+     * @return SklblLisageConfig[] Returns an array of SklblLisageConfig objects
+     */
+    public function getVariables($order): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('sklblOrder', $order)
+            ->setParameter('categorie', 'variable')
+            ->orderBy('s.orderNum', 'ASC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+
     public function countColumn($order){
         return $this->createQueryBuilder('u')
         ->select('COUNT(DISTINCT u.id)')
@@ -72,19 +115,54 @@ class SklblUploadConfigRepository extends ServiceEntityRepository
             ;
     }
 
-    public function findBySklblOrderActive($sklblOrder): array
+    public function findCustomerVariables($sklblOrder): array
     {
         return $this->createQueryBuilder('s')
             ->andWhere('s.sklblOrder = :sklblOrder')
             ->setParameter('sklblOrder', $sklblOrder)
-            ->andWhere('s.status = :status')
-            ->setParameter('status', 1)
-            ->orderBy('s.num', 'ASC')
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('categorie', 'variable')
+            ->andWhere('s.customer = :customer')
+            ->setParameter('customer', 1)
+            ->orderBy('s.orderNum', 'ASC')
             ->setMaxResults(20)
             ->getQuery()
             ->getResult()
         ;
     }
+
+    public function findF1Variables($sklblOrder): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->setParameter('sklblOrder', $sklblOrder)
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('categorie', 'variable')
+            ->andWhere('s.f1 = :f1')
+            ->setParameter('f1', 1)
+            ->orderBy('s.orderNum', 'ASC')
+            ->setMaxResults(20)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function findF1F2Variables($sklblOrder): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->setParameter('sklblOrder', $sklblOrder)
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('categorie', 'variable')
+            ->andWhere('s.f1 = :f1')
+            ->setParameter('f1', 1)
+            ->orderBy('s.orderNum', 'ASC')
+            ->setMaxResults(20)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
 
     
 

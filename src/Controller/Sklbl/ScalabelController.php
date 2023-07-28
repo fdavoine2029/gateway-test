@@ -9,6 +9,7 @@ use App\Entity\Sklbl\SklblEmballage;
 use App\Entity\Sklbl\SklblFiles;
 use App\Entity\Sklbl\SklblFx;
 use App\Entity\Sklbl\SklblFx2;
+use App\Entity\Sklbl\SklblLisageConfig;
 use App\Entity\Sklbl\SklblLogs;
 use App\Entity\Sklbl\SklblOf;
 use App\Entity\Sklbl\SklblOrders;
@@ -16,6 +17,7 @@ use App\Entity\Sklbl\SklblRubrique;
 use App\Entity\Sklbl\sklblSku;
 use App\Entity\Sklbl\SklblUploadConfig;
 use App\Form\Sklbl\SklblFilesFormType;
+use App\Form\Sklbl\SklblLisageFormType;
 use App\Form\Sklbl\SklblMajorationFormType;
 use App\Form\Sklbl\SklblUploadConfigFormType;
 use App\Message\SendNotification;
@@ -29,10 +31,12 @@ use App\Repository\Sklbl\SklblEmballageRepository;
 use App\Repository\Sklbl\SklblFilesRepository;
 use App\Repository\Sklbl\SklblFx2Repository;
 use App\Repository\Sklbl\SklblFxRepository;
+use App\Repository\Sklbl\SklblLisageConfigRepository;
 use App\Repository\Sklbl\SklblOfRepository;
 use App\Repository\Sklbl\SklblOrdersRepository;
 use App\Repository\Sklbl\SklblRubriqueRepository;
 use App\Repository\Sklbl\sklblSkuRepository;
+use App\Repository\Sklbl\SklblStructureRepository;
 use App\Repository\Sklbl\SklblUploadConfigRepository;
 use App\Service\sklbl\SklblExcelService;
 use App\Service\sklbl\SklblFileCustomerService;
@@ -66,6 +70,202 @@ class ScalabelController extends AbstractController
         ]);
     }
 
+
+    /*************************************************Page de configuration******************************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
+
+
+    public function initConf(SklblOrders $sklblOrder
+    ,SklblStructureRepository $sklblStructureRepository
+    ,EntityManagerInterface $entityManager){
+
+            $order = $sklblStructureRepository->find(1);
+            $variable = new SklblUploadConfig();
+            $variable->setSklblOrder($sklblOrder);
+            $variable->setCategorie('variable');
+            $variable->setSklblStructure($order);
+            $variable->setLabel('Qté commandée');
+            $variable->setFormat('numerique');
+            $variable->setUniqueValue(0);
+            $variable->setOrderNum(1);
+
+            $variable->setCustomer(1);
+            $variable->setF1(0);
+            $variable->setCustomerCsv('A');
+            $variable->setF2(0);
+            $variable->setF3(0);
+            $variable->setF4(0);
+            $variable->setF5(0);
+            $variable->setLisage(0);
+
+
+            $uniq_id = $sklblStructureRepository->find(2);
+            $variable2 = new SklblUploadConfig();
+            $variable2->setSklblOrder($sklblOrder);
+            $variable2->setCategorie('variable');
+            $variable2->setSklblStructure($uniq_id);
+            $variable2->setLabel('Id etiquette');
+            $variable2->setFormat('texte');
+            $variable2->setUniqueValue(1);
+            $variable2->setOrderNum(1);
+
+            $variable2->setCustomer(0);
+            $variable2->setF1(1);
+            $variable2->setF1Csv('A');
+            $variable2->setF2(0);
+            $variable2->setF3(0);
+            $variable2->setF4(0);
+            $variable2->setF5(0);
+            $variable2->setLisage(0);
+
+            $entityManager->persist($variable);
+            $entityManager->persist($variable2);
+            $entityManager->flush($variable);
+            $entityManager->flush($variable2);
+    }
+
+    #[Route('/step_conf/{order_id}/{action}', name: 'step_conf')]
+    public function step_conf(
+        SklblOrdersRepository $sklblOrdersRepository,
+        SklblUploadConfigRepository $sklblUploadConfigRepository,
+        SklblStructureRepository $sklblStructureRepository,
+        EntityManagerInterface $entityManager,
+        Request $request,
+        $order_id,
+        $action)
+    {
+        $sklblOrder = $sklblOrdersRepository->find($order_id);
+        $client = $sklblOrder->getClient();
+
+        // Si aucune variable n'est enregistrée, on initialise la conf
+        
+        $nb_column = $sklblUploadConfigRepository->countVariable($sklblOrder);
+        if($nb_column == 0){
+            $this->initConf($sklblOrder,$sklblStructureRepository,$entityManager);
+            $nb_column++;
+        }
+
+
+
+        if($nb_column > 0){
+            $variables = $sklblUploadConfigRepository->getVariables($sklblOrder);
+            $ind = 1;
+            foreach($variables as $variable){
+                $items['variable'.$ind] = $variable;
+                $ind ++;
+            }
+            $nb_column = $ind;
+        }
+        
+
+        if($action == 'add' || ($action == 'none') && $nb_column == 0){
+            $nb_column ++;
+            $variable = new SklblUploadConfig();
+            $items['variable'.$nb_column] = $variable;  
+        }
+     
+        
+        $form = $this->createFormBuilder($items);
+        $numvar = 1;
+        foreach($items as $item){
+            $form->add('variable'.$numvar,SklblUploadConfigFormType::class, [
+                'data_class' => SklblUploadConfig::class,
+            ]);
+            $numvar ++;
+        }
+
+        $form = $form->getForm();
+        $form->handleRequest($request);
+            if ($form->isSubmitted() && $form->isValid()) {
+                $num = 1;
+                foreach($form as $record){
+                    $id = $record->get('id')->getData();
+   
+                    if($id){
+                        $variable = $sklblUploadConfigRepository->find($record->get('id')->getData());
+                    }else{
+                        $variable = new SklblUploadConfig();
+                    }
+  
+
+                    if($record->get('delete')->isClicked()){
+                        $entityManager->remove($variable);
+                        $entityManager->flush($variable);
+                    }else{
+                        
+                        $variable->setSklblOrder($sklblOrder);
+                        $variable->setCategorie('variable');
+                        $variable->setSklblStructure($record->get('sklblStructure')->getData());
+                        $variable->setLabel($record->get('label')->getData());
+                        $variable->setFormat($record->get('format')->getData());
+                        $variable->setUniqueValue($record->get('uniqueValue')->getData());
+                        $variable->setOrderNum($num);
+
+                        $variable->setCustomer($record->get('customer')->getData());
+                        $variable->setF1($record->get('f1')->getData());
+                        $variable->setF2($record->get('f2')->getData());
+                        $variable->setF3($record->get('f3')->getData());
+                        $variable->setF4($record->get('f4')->getData());
+                        $variable->setF5($record->get('f5')->getData());
+                        $variable->setLisage($record->get('lisage')->getData());
+
+                        $variable->setCustomerCsv($record->get('customerCsv')->getData());
+                        $variable->setF1Csv($record->get('f1Csv')->getData());
+                        $variable->setF2Csv($record->get('f2Csv')->getData());
+                        $variable->setF3Csv($record->get('f3Csv')->getData());
+                        $variable->setF4Csv($record->get('f4Csv')->getData());
+                        $variable->setF5Csv($record->get('f5Csv')->getData());
+                        $variable->setLisageCsv($record->get('lisageCsv')->getData());
+
+                        $entityManager->persist($variable);
+                        $entityManager->flush($variable);
+                        
+                    }
+                    $num ++;
+
+                    
+                }
+
+                if($sklblOrder->getStatus() < 1){
+                    $sklblOrder->setSklblStatus(1);
+                    $entityManager->persist($sklblOrder);
+                    $entityManager->flush($sklblOrder);
+                }
+                
+
+                if($request->request->get('conf_submit') == 'add'){
+                    return $this->redirectToRoute('sklbl_step_conf', [
+                        'order_id' => $order_id,
+                        'nbColumn' => $nb_column,
+                        'action' => 'add'
+                    ]);
+                    
+                }else{
+                    return $this->redirectToRoute('sklbl_step_conf', [
+                        'order_id' => $order_id,
+                        'nbColumn' => $nb_column,
+                        'action' => 'none'
+                    ]);
+                }
+            }
+
+
+        return $this->render('sklbl/scalabel/step_conf.html.twig', [
+            'sklblOrder' => $sklblOrder,
+            'client' => $client,
+            'form' => $form->createView(),
+            'nbColumn' => $nb_column
+        ]);
+
+    }
+
+    /**************************************Etape1: Chargement du fichier client**************************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
+
     #[Route('/step_1/{order_id}', name: 'step_1')]
     public function step_1(
         Request $request,
@@ -79,7 +279,7 @@ class ScalabelController extends AbstractController
         int $order_id): Response
     {
         $sklblOrder = $sklblOrdersRepository->find($order_id);
-        $columns = $sklblUploadConfigRepository->findBySklblOrderActive($sklblOrder);
+        $columns = $sklblUploadConfigRepository->findCustomerVariables($sklblOrder);
         $skulist =$sklblSkuRepository->getSkuList($sklblOrder);
         $sklblFiles = new SklblFiles();
         $sklblFiles_param = $sklblFilesRepository->findOneBySklblOrder($sklblOrder);
@@ -91,7 +291,6 @@ class ScalabelController extends AbstractController
         }
         $form = $this->createForm(SklblFilesFormType::class, $sklblFiles);
         $client = $sklblOrder->getClient();
-        $countFaconnier = $sklblSkuRepository->countFaconnier($sklblOrder);
         $countSku = $sklblSkuRepository->countSku($sklblOrder);
         $countQte = $sklblSkuRepository->countQte($sklblOrder);
         $files = $sklblFilesRepository->getCustomerOrderFileList($sklblOrder);
@@ -144,7 +343,6 @@ class ScalabelController extends AbstractController
             'client' => $client,
             'skus' => $skulist,
             'columnLigne' => $columnLigne,
-            'nbfaconnier' => $countFaconnier,
             'nbsku' => $countSku,
             'nbqte' => $countQte,
             'files' => $files,
@@ -179,7 +377,7 @@ class ScalabelController extends AbstractController
 
             // On récupère les colonnes
             
-            $columnList = $sklblUploadConfigRepository->findBySklblOrderActive($order);
+            $columnList = $sklblUploadConfigRepository->findCustomerVariables($order);
 
             // Si des demandes de transfert sont détectées
             // Lancement de l'intégration
@@ -252,57 +450,25 @@ class ScalabelController extends AbstractController
                                     // On identifie la lettre de la colonne
                                     $column = $excelService->num2alpha($column_index);
                                     foreach($columnList as $paramcol){
-                                        if($paramcol->getColumnCsv() == $column){
-                                            switch ($paramcol->getNum()) {
-                                                case 1:
-                                                    $sku->setId($row[$column_index]);
-                                                    break;
-                                                case 2:
-                                                    $sku->setVendor($row[$column_index]);
-                                                    break;
-                                                case 3:
-                                                    $sku->setSku($row[$column_index]);
-                                                    break;
-                                                case 4:
-                                                    $sku->setSkuTisse($row[$column_index]);
-                                                    break;
-                                                case 5:
+                                        if($paramcol->getCustomerCsv() == $column){
+                                            switch ($paramcol->getSklblStructure()->getName()) {
+                                                case 'order_qte':
                                                     try {
                                                         $sku->setOrderQte(intval($row[$column_index]));
                                                     } catch (Exception $e) {
                                                         $nbcolonneErrors++;
                                                     }
                                                     break;
-                                                case 6:
-                                                    $sku->setOptData1($row[$column_index]);
+                                                case 'data1':
+                                                    $sku->setData1($row[$column_index]);
                                                     break;
-                                                case 7:
-                                                    $sku->setOptData2($row[$column_index]);
+                                                case 'data2':
+                                                    $sku->setData2($row[$column_index]);
                                                     break;
-                                                case 8:
-                                                    $sku->setOptData3($row[$column_index]);
+                                                case 'data3':
+                                                    $sku->setData3($row[$column_index]);
                                                     break;
-                                                case 9:
-                                                    $sku->setOptData4($row[$column_index]);
-                                                    break;
-                                                case 10:
-                                                    $sku->setOptData5($row[$column_index]);
-                                                    break;
-                                                case 11:
-                                                    $sku->setOptData6($row[$column_index]);
-                                                    break;
-                                                case 12:
-                                                    $sku->setOptData7($row[$column_index]);
-                                                    break;
-                                                case 12:
-                                                    $sku->setOptData8($row[$column_index]);
-                                                    break;
-                                                case 12:
-                                                    $sku->setOptData9($row[$column_index]);
-                                                    break;
-                                                case 12:
-                                                    $sku->setOptData10($row[$column_index]);
-                                                    break;
+                                            
                                             }
                                         }
                                     }
@@ -418,144 +584,10 @@ class ScalabelController extends AbstractController
 
 
 
-    #[Route('/step_1/configure_colum/{order_id}/{nb_column}', name: 'configure_colum')]
-    public function step_1_conf_column(
-        SklblOrdersRepository $sklblOrdersRepository,
-        SklblUploadConfigRepository $sklblUploadConfigRepository,
-        EntityManagerInterface $entityManager,
-        Request $request,
-        $order_id,
-        $nb_column)
-    {
-        $sklblOrder = $sklblOrdersRepository->find($order_id);
-        $client = $sklblOrder->getClient();
-        if($nb_column == 5){
-            $nb_column2 = $sklblUploadConfigRepository->countColumn($sklblOrder);
-            if($nb_column2 > 5 ){
-                $nb_column = $nb_column2;
-            }
-        }
-        
-
-        $column1 = $sklblUploadConfigRepository->findColumn($sklblOrder,1);
-        $column2 = $sklblUploadConfigRepository->findColumn($sklblOrder,2);
-        $column3 = $sklblUploadConfigRepository->findColumn($sklblOrder,3);
-        $column4 = $sklblUploadConfigRepository->findColumn($sklblOrder,4);
-        $column5 = $sklblUploadConfigRepository->findColumn($sklblOrder,5);
-
-        if(!$column1){
-            $column1 = new SklblUploadConfig();
-            $column1->setColumnName('id');
-            $column1->setColumnLabel('Identifiant');
-        }
-        if(!$column2){
-            $column2 = new SklblUploadConfig();
-            $column2->setColumnName('vendor');
-            $column2->setColumnLabel('Façonnier');
-        }
-        if(!$column3){
-            $column3 = new SklblUploadConfig();
-            $column3->setColumnName('sku');
-            $column3->setColumnLabel('Lot (Sku)');
-        }
-        if(!$column4){
-            $column4 = new SklblUploadConfig();
-            $column4->setColumnName('sku_tisse');
-            $column4->setColumnLabel('Variable à tisser');
-        }
-        if(!$column5){
-            $column5 = new SklblUploadConfig();
-            $column5->setColumnName('order_qte');
-            $column5->setColumnLabel('Quantité');
-        }
-
-        $items = ['column1' => $column1, 
-        'column2' => $column2,
-        'column3' => $column3,
-        'column4' => $column4,
-        'column5' => $column5];
-
-        if($nb_column > 5){
-            $ind = 6;
-            while($ind < $nb_column + 1){
-                $column = $sklblUploadConfigRepository->findColumn($sklblOrder,$ind);
-                if(!$column){
-                    $column = new SklblUploadConfig();
-                    $column->setColumnName('opt_data'.$ind - 5);
-                }
-                $items['column'.$ind] = $column;
-                $ind ++;
-            }
-        }
-
-        $form = $this->createFormBuilder($items)
-        ->add('column1',SklblUploadConfigFormType::class, [
-            'data_class' => SklblUploadConfig::class,
-        ])
-        ->add('column2',SklblUploadConfigFormType::class, [
-            'data_class' => SklblUploadConfig::class,
-        ])
-        ->add('column3',SklblUploadConfigFormType::class, [
-            'data_class' => SklblUploadConfig::class,
-        ])
-        ->add('column4',SklblUploadConfigFormType::class, [
-            'data_class' => SklblUploadConfig::class,
-        ])
-        ->add('column5',SklblUploadConfigFormType::class, [
-            'data_class' => SklblUploadConfig::class,
-        ]);
-
-        if($nb_column > 5){
-            $ind = 6;
-            while($ind < $nb_column + 1){
-                $form->add('column'.$ind,SklblUploadConfigFormType::class, [
-                    'data_class' => SklblUploadConfig::class,
-                ]);
-                $ind ++;
-            }
-        }
-        
-        $form = $form->getForm();
-
-        $form->handleRequest($request);
-        
-        if ($form->isSubmitted() && $form->isValid()) {
-            $num = 1;
-            $allcolumns = $sklblUploadConfigRepository->findBySklblOrder($sklblOrder);
-            foreach($allcolumns as $allcolumn){
-                $allcolumn->setStatus(0);
-                $entityManager->persist($allcolumn);
-                $entityManager->flush($allcolumn);
-            }
-
-            foreach($form as $record){
-                $column = $sklblUploadConfigRepository->findColumn($sklblOrder,$num);
-                if(!$column){
-                    $column = new SklblUploadConfig();
-                }
-                
-                $column->setSklblOrder($sklblOrder);
-                $column->setColumnName($record->get('columnName')->getData());
-                $column->setColumnLabel($record->get('columnLabel')->getData());
-                $column->setColumnCsv($record->get('columnCsv')->getData());
-                $column->setNum($num);
-                $column->setStatus(1);
-                $column->setLisage($record->get('lisage')->getData());
-                $entityManager->persist($column);
-                $entityManager->flush($column);
-                $num ++;
-            }
-        }
-
-
-        return $this->render('sklbl/scalabel/step1_conf.html.twig', [
-            'sklblOrder' => $sklblOrder,
-            'client' => $client,
-            'nbColumn' => $nb_column,
-            'form' => $form->createView()
-        ]);
-
-    }
+       /**************************************Etape2: Calcul des quantités**************************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
 
 
     #[Route('/step_2/{order_id}', name: 'step_2')]
@@ -570,7 +602,7 @@ class ScalabelController extends AbstractController
         int $order_id): Response
     {
         $sklblOrder = $sklblOrdersRepository->find($order_id);
-        $columnList = $sklblUploadConfigRepository->findBySklblOrderActive($sklblOrder);
+        $columnList = $sklblUploadConfigRepository->findCustomerVariables($order_id);
         $skulist = $sklblSkuRepository->getSkuList($sklblOrder);
         $skulist2 = $sklblSkuRepository->getSkuStep1List($sklblOrder);
         $countSku = $sklblSkuRepository->countSku($sklblOrder);
@@ -625,6 +657,11 @@ class ScalabelController extends AbstractController
         ]);
     }
 
+
+     /**************************************Etape3: On rappatrie l'OF**************************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
 
     #[Route('/step_3/{order_id}', name: 'step_3')]
     public function step3(
@@ -687,63 +724,6 @@ class ScalabelController extends AbstractController
         ]);
     }
 
-
-    #[Route('/step_4/{order_id}', name: 'step_4')]
-    public function step_4(
-        SklblOrdersRepository $sklblOrdersRepository,
-        SklblOfRepository $sklblOfRepository,
-        SklblFilesRepository $sklblFilesRepository,
-        SklblSkuRepository $sklblSkuRepository,
-        SklblFxRepository $sklblFxRepository,
-        SklblUploadConfigRepository $sklblUploadConfigRepository,
-        int $order_id): Response
-        {
-            $sklblOrder = $sklblOrdersRepository->find($order_id);
-            $columnList = $sklblUploadConfigRepository->findBySklblOrderActive($sklblOrder);
-            $sklblOf = $sklblOfRepository->findOneBySklblOrder($sklblOrder);
-            $sklblFiles = $sklblFilesRepository->getStep4Files($sklblOrder);
-            $sklblFx = $sklblFxRepository->getFxInTraitement($sklblOrder);
-            $article = $sklblOf->getArticle();
-            $client  = $sklblOf->getClient();
-
-            $countFilesTraite = $sklblFilesRepository->countFilesTraite($sklblOrder);
-            $countFilesNonTraite = $sklblFilesRepository->countFilesNonTraite($sklblOrder);
-            $countFilesAttenteTransfert = $sklblFilesRepository->countFileAttenteTransfert($sklblOrder);
-
-
-            $countSkuNonTraited = $sklblSkuRepository->countSkuNonTraite($sklblOrder);
-            $countSkuTraited = $sklblSkuRepository->countSkuTraited($sklblOrder);
-            $countSkuAttenteTransfert = $sklblSkuRepository->countSkuAttenteTransfert($sklblOrder);
-            
-            $countSku = $sklblSkuRepository->countSku($sklblOrder);
-            $produceQte = $sklblSkuRepository->countProduceQte($sklblOrder);
-
-            if($countSkuNonTraited == 0 && $countSkuTraited > 0 && $countFilesTraite > 0 && $countFilesNonTraite == 0){
-                $activateBtnTransfert = true;
-            }else{
-                $activateBtnTransfert = false;
-            }
-            
-            return $this->render('sklbl/scalabel/step4.html.twig', [
-                'sklblFx' => $sklblFx,
-                'sklblOrder' => $sklblOrder,
-                'columns' => $columnList,
-                'sklblOf' => $sklblOf,
-                'sklblFiles' => $sklblFiles,
-                'article' => $article,
-                'client' => $client,
-                'produce_qte' => $produceQte,
-                'countFilesNonTraite' => $countFilesNonTraite,
-                'countFilesTraite' => $countFilesTraite,
-                'countFilesAttenteTransfert' => $countFilesAttenteTransfert,
-                'countSkuNonTraited' => $countSkuNonTraited,
-                'countSkuTraited' => $countSkuTraited,
-                'countSkuAttenteTransfert' => $countSkuAttenteTransfert,
-                'count_sku' => $countSku,
-                'activateBtnTransfert' => $activateBtnTransfert
-            ]);
-    }
-
     #[Route('/import_ofs/{order_id}', name: 'import_ofs')]
     public function import_ofs(
         SklblOrdersRepository $sklblOrdersRepository,
@@ -794,6 +774,63 @@ class ScalabelController extends AbstractController
         ]);
     }
 
+
+     /**************************************Etape4: On rappatrie le F1 **********************************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
+
+    #[Route('/step_4/{order_id}', name: 'step_4')]
+    public function step_4(
+        SklblOrdersRepository $sklblOrdersRepository,
+        SklblOfRepository $sklblOfRepository,
+        SklblFilesRepository $sklblFilesRepository,
+        SklblSkuRepository $sklblSkuRepository,
+        SklblFxRepository $sklblFxRepository,
+        SklblUploadConfigRepository $sklblUploadConfigRepository,
+        int $order_id): Response
+        {
+            $sklblOrder = $sklblOrdersRepository->find($order_id);
+            $columnList = $sklblUploadConfigRepository->findF1F2Variables($sklblOrder);
+            $sklblOf = $sklblOfRepository->findOneBySklblOrder($sklblOrder);
+            $sklblFiles = $sklblFilesRepository->getStep4Files($sklblOrder);
+            $sklblFx = $sklblFxRepository->getFxInTraitement($sklblOrder);
+            $article = $sklblOf->getArticle();
+            $client  = $sklblOf->getClient();
+
+            $countFilesTraite = $sklblFilesRepository->countFilesTraite($sklblOrder);
+            $countFilesNonTraite = $sklblFilesRepository->countFilesNonTraite($sklblOrder);
+            $countFilesAttenteTransfert = $sklblFilesRepository->countFileAttenteTransfert($sklblOrder);
+
+
+            $countSkuNonTraited = $sklblSkuRepository->countSkuNonTraite($sklblOrder);
+            $countSkuTraited = $sklblSkuRepository->countSkuTraited($sklblOrder);
+            $countSkuAttenteTransfert = $sklblSkuRepository->countSkuAttenteTransfert($sklblOrder);
+            
+            $countSku = $sklblSkuRepository->countSku($sklblOrder);
+            $produceQte = $sklblSkuRepository->countProduceQte($sklblOrder);
+
+
+            return $this->render('sklbl/scalabel/step4.html.twig', [
+                'sklblFx' => $sklblFx,
+                'sklblOrder' => $sklblOrder,
+                'columns' => $columnList,
+                'sklblOf' => $sklblOf,
+                'sklblFiles' => $sklblFiles,
+                'article' => $article,
+                'client' => $client,
+                'produce_qte' => $produceQte,
+                'countFilesNonTraite' => $countFilesNonTraite,
+                'countFilesTraite' => $countFilesTraite,
+                'countFilesAttenteTransfert' => $countFilesAttenteTransfert,
+                'countSkuNonTraited' => $countSkuNonTraited,
+                'countSkuTraited' => $countSkuTraited,
+                'countSkuAttenteTransfert' => $countSkuAttenteTransfert,
+                'count_sku' => $countSku
+            ]);
+    }
+
+
     #[Route('/generate_f1/{of_id}', name: 'generate_f1')]
     public function generate_f1(
         SklblOfRepository $sklblOfRepository,
@@ -832,6 +869,8 @@ class ScalabelController extends AbstractController
         $orders = $sklblOrdersRepository->getCurrentOrders();
         $log = new SklblLogs();
         foreach($orders as $order){
+            // On vérifier la configuration pour la commande
+
             // Pour chaque commande on vérifier si des demandes de génération des enregistrements ont été enregistrées
             $files = $sklblFilesRepository->getStep4FileAGenererList($order);
             $countStep4FileAGenerer = sizeof($files); 
@@ -848,6 +887,9 @@ class ScalabelController extends AbstractController
                             $fx->setSklblOf($of);
                             $fx->setSklblFile($file);
                             $fx->setSklblSku($sku);
+                            $fx->setData1($sku->getData1());
+                            $fx->setData2($sku->getData2());
+                            $fx->setData3($sku->getData3());
                             $fx->setStatus(1);
                             $currentDate = new DateTimeImmutable();
                             $fx->setUpdatedAt($currentDate);
@@ -904,6 +946,124 @@ class ScalabelController extends AbstractController
     }
 
 
+
+
+
+
+
+    #[Route('/step_5/{order_id}/{nb_column}', name: 'step_5')]
+    public function step_5(
+        SklblOrdersRepository $sklblOrdersRepository,
+        SklblOfRepository $sklblOfRepository,
+        SklblFilesRepository $sklblFilesRepository,
+        SklblSkuRepository $sklblSkuRepository,
+        SklblFxRepository $sklblFxRepository,
+        SklblLisageConfigRepository $sklblLisageConfigRepository,
+        EntityManagerInterface $entityManager,
+        Request $request,
+        int $order_id,
+        int $nb_column): Response
+        {
+            $sklblOrder = $sklblOrdersRepository->find($order_id);
+            $variables = $sklblLisageConfigRepository->getVariablesAtisser($sklblOrder);
+            $items = array();
+            if(sizeof($variables) > 0){
+                $ind = 1;
+                foreach($variables as $variable){
+                    $items['variable'.$ind] = $variable;
+                    $ind ++;
+                }
+                if($nb_column > $ind){
+                    $variable = new SklblLisageConfig();
+                    $variable->setCategorie('variable');
+                    $variable->setNum($ind);
+                    $items['variable'.$ind] = new SklblLisageConfig();
+                }
+            }else{
+                $ind = 1;
+                while($ind <= $nb_column){
+                    $variable = new SklblLisageConfig();
+                    $variable->setCategorie('variable');
+                    $variable->setNum($ind);
+                    $items['variable'.$ind] = new SklblLisageConfig();
+                    $ind ++;
+                }
+                
+            }
+
+
+            $form = $this->createFormBuilder($items);
+            $numvar = 1;
+            foreach($items as $item){
+                $form->add('variable'.$numvar,SklblLisageFormType::class, [
+                    'data_class' => SklblLisageConfig::class,
+                ]);
+                $numvar ++;
+            }
+            $form = $form->getForm();
+            
+
+            $form->handleRequest($request);
+            if ($form->isSubmitted() && $form->isValid()) {
+                $num = 1;
+                
+                foreach($form as $record){
+                    $variable = $sklblLisageConfigRepository->findConf($sklblOrder,$record->get('sklblStructure')->getData(),'variable');
+                    if(!$variable){
+                        $variable = new SklblLisageConfig();
+                    }
+                    $variable->setSklblOrder($sklblOrder);
+                    $variable->setSklblStructure($record->get('sklblStructure')->getData());
+                    $variable->setName($record->get('sklblStructure')->getData()->getName());
+                    $variable->setLabel($record->get('label')->getData());
+                    $variable->setCategorie('variable');
+                    $variable->setNum($record->get('num')->getData());
+                    $variable->setFormat($record->get('format')->getData());
+                    $variable->setValue($record->get('value')->getData());
+
+                    $entityManager->persist($variable);
+                    $entityManager->flush($variable);
+                    $num ++;
+                }
+                if($request->request->get('lisage_submit_button') == 'add'){
+                    return $this->redirectToRoute('sklbl_step_5', [
+                        'order_id' => $order_id,
+                        'nb_column' => $nb_column + 1
+                    ]);
+                    
+                }
+                if($request->request->get('lisage_submit_button') == 'delete'){
+                    return $this->redirectToRoute('sklbl_step_5', [
+                        'order_id' => $order_id,
+                        'nb_column' => $nb_column - 1
+                    ]);
+                    
+                }
+            }
+
+
+            return $this->render('sklbl/scalabel/step5.html.twig', [
+                'sklblOrder' => $sklblOrder,
+                'variableExist' => 1,
+                'form' => $form->createView(),
+                'nbColumn' => $nb_column
+            ]);
+            
+            return $this->render('sklbl/scalabel/step5.html.twig', [
+                'sklblOrder' => $sklblOrder,
+                'variableExist' => 0,
+                'nbColumn' => $nb_column
+            ]);
+            
+    }
+
+    
+
+    
+
+    
+
+
     #[Route('/ask_transfert/{of_id}', name: 'ask_transfert')]
     public function ask_transfert(
         SklblOfRepository $sklblOfRepository,
@@ -927,6 +1087,34 @@ class ScalabelController extends AbstractController
         $entityManager->flush();
 
         return $this->redirectToRoute('sklbl_step_4', [
+            'order_id' => $sklblOrder->getId()
+        ]);
+        
+    }
+
+    #[Route('/conf_reception/{of_id}', name: 'conf_reception')]
+    public function conf_reception(
+        SklblOfRepository $sklblOfRepository,
+        SklblSkuRepository $sklblSkuRepository,
+        SklblFilesRepository $sklblFilesRepository,
+        EntityManagerInterface $entityManager,
+        MessageBusInterface $bus,
+        int $of_id): Response
+    {
+        $sklblOf = $sklblOfRepository->find($of_id);
+        $sklblOrder = $sklblOf->getSklblOrder();
+        $sklblFiles = $sklblFilesRepository->getStep4FilesATransferer($sklblOrder);
+        foreach($sklblFiles as $file){
+            $file->setStatus(4);
+            $entityManager->persist($file);
+            $entityManager->flush();
+        }
+
+        $sklblOrder->setSklblStatus(12);
+        $entityManager->persist($sklblOrder);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('sklbl_step_5', [
             'order_id' => $sklblOrder->getId()
         ]);
         

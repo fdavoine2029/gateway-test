@@ -6,6 +6,7 @@ use App\Entity\Articles;
 use App\Repository\Sklbl\SklblFxRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SklblFxRepository::class)]
@@ -32,9 +33,6 @@ class SklblFx
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $uniqueId = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $redirectUrl = null;
-
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $sent_on = null;
 
@@ -52,6 +50,17 @@ class SklblFx
 
     #[ORM\OneToMany(mappedBy: 'SklblFx', targetEntity: SklblFx2::class)]
     private Collection $sklblFx2s;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $data1 = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $data2 = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $data3 = null;
+
+
 
     public function __construct()
     {
@@ -104,17 +113,6 @@ class SklblFx
         return $this;
     }
 
-    public function getRedirectUrl(): ?string
-    {
-        return $this->redirectUrl;
-    }
-
-    public function setRedirectUrl(?string $redirectUrl): static
-    {
-        $this->redirectUrl = $redirectUrl;
-
-        return $this;
-    }
 
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
@@ -139,6 +137,8 @@ class SklblFx
 
         return $this;
     }
+
+
 
     public function getSentOn(): ?\DateTimeImmutable
     {
@@ -217,6 +217,44 @@ class SklblFx
 
         return $this;
     }
+
+    public function getData1(): ?string
+    {
+        return $this->data1;
+    }
+
+    public function setData1(?string $data1): static
+    {
+        $this->data1 = $data1;
+
+        return $this;
+    }
+
+    public function getData2(): ?string
+    {
+        return $this->data2;
+    }
+
+    public function setData2(?string $data2): static
+    {
+        $this->data2 = $data2;
+
+        return $this;
+    }
+
+    public function getData3(): ?string
+    {
+        return $this->data3;
+    }
+
+    public function setData3(?string $data3): static
+    {
+        $this->data3 = $data3;
+
+        return $this;
+    }
+
+    
 
     
 

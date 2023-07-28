@@ -20,3 +20,8 @@ function generate_f1(ofId) {
 function ask_transfert(ofId) {
     window.location.replace("/sklbl/ask_transfert/"+ofId);
 }
+
+function conf_reception(ofId) {
+    window.location.replace("/sklbl/conf_reception/"+ofId);
+}
+

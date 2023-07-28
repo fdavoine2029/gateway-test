@@ -24,31 +24,19 @@
             <legend  class="float-none w-auto p-2">Paramétrage</legend>
             <div class="row">
                 <div class="col-1"></div>
-                <div class="col-11">
-                    <button type="button" onclick="step1_conf_column({{ sklblOrder.id }},5)" class="btn btn-success mt-2">Configurer des colonnes</button>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-1"></div>
                 <div class="col-10">
                     <table id="fx_step1_column" class="display border" style="width:100%;font-size: 0.8em">
                         <thead>
                             <tr>
                                 <th>Données</th>
                                 <th>Colonne du CSV</th>
-                                <th>Lisage</th>
                             </tr>
                         </thead>
                         <tbody>
                         {% for column in columns %}
                             <tr>
-                                <td>{{ column.columnLabel }}</td>
-                                <td>{{ column.columnCsv }}</td>
-                                {% if column.lisage == 1 %}
-                                    <td>Oui</td>
-                                {% else %}
-                                    <td>Non</td>
-                                {% endif %}
+                                <td>{{ column.label }}</td>
+                                <td>{{ column.customerCsv }}</td>
                                 
                             </tr>
                         {% endfor %}
@@ -143,9 +131,6 @@
                 <section class="row">
                     <div class="col-3"></div>
                     <div class="col-2">
-                        Nombre de faconniers: {{ nbfaconnier }}
-                    </div>
-                    <div class="col-2">
                         Nombre de sku: {{ nbsku }}
                     </div>
                     <div class="col-2">
@@ -162,42 +147,26 @@
                     <table id="sku_table" class="display" style="width:100%;font-size: 0.8em">
                         <thead>
                             <tr>
-                                <th>Façonnier</th>
-                                <th>Id</th>
-                                <th>Lot (Sku)</th>
-                                <th>Variable à tisser</th>
                                 {% for column in columns %}
-                                    {% if column.num > 5 and column.num < 9 %}
-                                            <th>{{ column.columnLabel }}</th>                            
-                                    {% endif %}
-                                    
+                                    <th>{{ column.label }}</th>                               
                                 {% endfor %}
-                                <th>Quantités commandées</th>
                                 <th>Fichier</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
+                        
                         {% for sku in skus %}
                             <tr>
-                                <th>{{ sku.vendor }}</th>
-                                <th>{{ sku.id }}</th>
-                                <th>{{ sku.sku }}</th>
-                                <th>{{ sku.sku_tisse }}</th>
+
                                 {% for column in columns %}
-                                    {% if column.num > 5 and column.num < 9 %}
-                                        {% if column.num == 6 %}
-                                                <th>{{ sku.opt_data1 }}</th>                            
-                                        {% endif %}
-                                        {% if column.num == 7 %}
-                                                <th>{{ sku.opt_data2 }}</th>                            
-                                        {% endif %}
-                                        {% if column.num == 8 %}
-                                                <th>{{ sku.opt_data3 }}</th>                            
-                                        {% endif %}
+                                    {% if column.sklblStructure.name == "order_qte" %}
+                                            <th>{{ sku.order_qte }}</th>                            
                                     {% endif %}
+                                    {% if column.sklblStructure.name == "data1" %}<th>{{ sku.data1 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data2" %}<th>{{ sku.data2 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data3" %}<th>{{ sku.data3 }}</th>{% endif %}
                                 {% endfor %}
-                                <th>{{ sku.order_qte }}</th>
                                 <th>{{ sku.client_filename }}</th>
                                 <th>{{ sku.status }}</th>
                             </tr>
@@ -206,21 +175,15 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <th>Façonnier</th>
-                                <th>Id</th>
-                                <th>Lot (Sku)</th>
-                                <th>Variable à tisser</th>
                                 {% for column in columns %}
-                                    {% if column.num > 5 and column.num < 9 %}
-                                            <th>{{ column.columnLabel }}</th>                            
-                                    {% endif %}
+                                        <th>{{ column.label }}</th>                            
                                 {% endfor %}
-                                <th>Quantités commandées</th>
                                 <th>Fichier</th>
                                 <th>Status</th>
                             </tr>
                         </tfoot>
                     </div>
+                   
                     </div>
                 </section>
         </fieldset>

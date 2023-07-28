@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Scalabel - Génération OF{% endblock %}
+
+{% block body %}
+
+ {% block stylesheets %}
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet"/>
+ {% endblock %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('assets/js/sklbl_menu.js')}}"></script>
+    <script src="{{ asset('assets/js/sklbl_step5.js')}}"></script>
+
+{% endblock %}
+<main class="container-fluid">
+    <section class="row">
+    <h3> Scalabel - Commandes {{sklblOrder.orderNum}}</h3>
+        {% include '_partials/_sklbl/_menu.html.twig' %}
+
+        <fieldset class="border p-2">
+        <legend  class="float-none w-auto p-2">Variables à Tisser</legend>
+            <div class="row pt-2">
+                <div class="col-12">
+                    {% if variableExist == 0 %}
+                        Aucune variable n'a été configurée pour le lisage.
+                    {% else %}
+                        {{ form_start(form) }}
+                        {% set row = 1 %}
+                        {% for variable in form %}
+                            <div class="row">
+                                {% set col = 1 %}
+                                {% for field in variable %}
+                                    <div class="col-2">
+                                        {{ form_label(field) }}
+                                        {{ form_errors(field) }}
+                                        {{ form_widget(field) }}
+                                    </div>
+
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+            
+            {% if nbColumn < 15 %}
+                <input type="hidden" id="step5_action" value="add">
+                <div class="col-1"><button type="submit" class="btn btn-success mt-2" id="lisage_submit_button" name="lisage_submit_button" value="add">Ajouter</button></div>
+            {% endif %}
+            {% if nbColumn > 1 %}
+                <div class="col-1"><button type="submit" class="btn btn-danger mt-2" id="lisage_submit_button" name="lisage_submit_button" value="delete">Retirer</button></div>
+            {% endif %}
+            
+            {{ form_end(form) }}
+            <div class="col-4"></div>
+            <div class="col-4"></div>
+       </div>
+        </fieldset>
+
+</main>
+{% endblock %}

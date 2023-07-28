@@ -59,7 +59,8 @@ class SklblFilesRepository extends ServiceEntityRepository
     public function getStep4Files($order){
         $conn = $this->getEntityManager()->getConnection();
 
-        $sql = "SELECT files.id,
+        $sql = "SELECT 
+        files.id,
         files.client_filename,
         files.categorie,
         files.status,
@@ -122,6 +123,23 @@ class SklblFilesRepository extends ServiceEntityRepository
             ->andWhere('s.status = :status')
             ->setParameter('sklblOrder', $order)
             ->setParameter('status', 3)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+     /**
+     * @return SklblFiles[] Returns an array of SklblFiles objects
+     */
+    public function getStep4FilesF2Received($order): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->andWhere('s.status = :status')
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('sklblOrder', $order)
+            ->setParameter('status', 3)
+            ->setParameter('categorie', 'fx2')
             ->getQuery()
             ->getResult()
         ;

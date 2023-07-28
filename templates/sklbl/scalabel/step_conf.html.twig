@@ -1,0 +1,145 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Scalabel - Commandes{% endblock %}
+
+{% block body %}
+
+ {% block stylesheets %}
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet"/>
+ {% endblock %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('assets/js/sklbl_menu.js')}}"></script>
+    <script src="{{ asset('assets/js/sklbl_step_conf.js')}}"></script>
+{% endblock %}
+
+<main class="container-fluid">
+    <section class="row">
+    <h3> Scalabel - Commandes {{sklblOrder.orderNum}} du client {{client.name}}</h3>
+    {% include '_partials/_sklbl/_menu.html.twig' %}
+    <div class="container">
+    
+
+    <fieldset class="border p-2">
+        <legend  class="float-none w-auto p-2">Configuration des données</legend>
+       {{ form_start(form) }}
+         {% set row = 1 %}
+         {% for variable in form %}
+            <div class="row">
+                {% set col = 1 %}
+                {% for field in variable %}
+                    {% if col <= 4 %}
+                        <div class="col-1">
+                            {{ form_label(field) }}
+                            {{ form_errors(field) }}
+                            {{ form_widget(field) }}
+                        </div>
+                    {% elseif col == 5 %}
+                        <div class="col-1">
+                                    {{ form_label(field) }}
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                    {% elseif col == 6 %}
+                                    
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                        </div>
+                    {% elseif col == 7 %}
+                        <div class="col-1">
+                                    {{ form_label(field) }}
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                    {% elseif col == 8 %}
+                                    
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                        </div>
+                    {% elseif col == 9 %}
+                        <div class="col-1">
+                                    {{ form_label(field) }}
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                    {% elseif col == 10 %}
+                                    
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                        </div>
+                    {% elseif col == 11 %}
+                        <div class="col-1">
+                                    {{ form_label(field) }}
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                    {% elseif col == 12 %}
+                                    
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                        </div>
+                    {% elseif col == 13 %}
+                        <div class="col-1">
+                                    {{ form_label(field) }}
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                    {% elseif col == 14 %}
+                                    
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                        </div>
+                    {% elseif col == 15 %}
+                        <div class="col-1">
+                                    {{ form_label(field) }}
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                    {% elseif col == 16 %}
+                                    
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                        </div>
+                    {% elseif col == 17 %}
+                        <div class="col-1">
+                                    {{ form_label(field) }}
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                    {% elseif col == 18 %}
+                                    
+                                    {{ form_errors(field) }}
+                                    {{ form_widget(field) }}
+                                    
+                        </div>
+                    {% elseif col == 19 %}
+                            <div class="col-1">
+                                {{ form_row(field) }}
+                            </div>
+                    {% else %}   
+                    <div  hidden>{{ form_row(field) }}</div>
+  
+                    {% endif %}
+                    
+                    {% set col = col + 1 %}
+                {% endfor %}
+
+                
+            </div>
+            {% set row = row + 1 %}
+            {% endfor %}
+        <div class="row">
+            {% if nbColumn < 100 %}
+                <div class="col-1"><button type="submit" class="btn btn-success mt-2" id="conf_submit" name="conf_submit" value="add">Ajouter</button></div>
+            {% endif %}
+       </div>
+       <div class="row">
+        <div class="col-4"></div>
+        <div class="col-1"><button type="submit" class="btn btn-success mt-2" id="conf_submit" name="conf_submit" value="none">Sauvegarder</button></div>
+        <div class="col-4"></div>
+            
+       </div>
+       
+       {{ form_end(form) }}
+       
+        
+        
+    </fieldset>
+
+
+{% endblock %}

@@ -119,8 +119,6 @@ class SklblFxRepository extends ServiceEntityRepository
         $conn = $this->getEntityManager()->getConnection();
 
         $sql = "select 
-        
-                sku.*,
                 fx.*,
                 status.name as status
                 from sklbl_fx as fx

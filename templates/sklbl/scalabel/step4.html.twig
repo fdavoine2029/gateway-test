@@ -43,15 +43,32 @@
         <div class="row pt-2">
             <div class="col-1"></div>
             
-            {% if activateBtnTransfert %}
+ 
+
+            {% if sklblOrder.sklblStatus == 4 or sklblOrder.sklblStatus == 5 %}
                 <div class="col-3"><button type="button" onclick="generate_f1({{ sklblOf.id }})" class="btn btn-success mt-2">Générer les enregistrements</button></div>
-                <div class="col-3"><button type="button" onclick="ask_transfert({{ sklblOf.id }})"class="btn btn-primary mt-2" >Demander le transfert Scalabel</button></div>
-            {% else %}
-                <div class="col-3"><button type="button" onclick="generate_f1({{ sklblOf.id }})" class="btn btn-primary mt-2">Générer les enregistrements</button></div>
                 <div class="col-3"><button type="button" class="btn btn-secondary mt-2" disabled>Demander le transfert Scalabel</button></div>
             {% endif %}
+            {% if sklblOrder.sklblStatus == 6 or sklblOrder.sklblStatus == 7 or sklblOrder.sklblStatus == 8%}
+                <div class="col-3"><button type="button" onclick="generate_f1({{ sklblOf.id }})" class="btn btn-success mt-2">Générer les enregistrements</button></div>
+                <div class="col-3"><button type="button" onclick="ask_transfert({{ sklblOf.id }})"class="btn btn-primary mt-2" >Demander le transfert Scalabel</button></div>
+            {% endif %}
+            {% if sklblOrder.sklblStatus > 8%}
+                <div class="col-3"><button type="button" onclick="generate_f1({{ sklblOf.id }})" class="btn btn-success mt-2">Générer les enregistrements</button></div>
+                <div class="col-3"><button type="button" onclick="ask_transfert({{ sklblOf.id }})"class="btn btn-success mt-2" >Demander le transfert Scalabel</button></div>
+            {% endif %}
+
+            {% if sklblOrder.sklblStatus < 11 %}
+                <div class="col-3"><button type="button" class="btn btn-secondary  mt-2" disabled>Confirmer la reception de Scalabel</button></div>
+            {% elseif sklblOrder.sklblStatus == 11 %}
+                <div class="col-3"><button type="button" class="btn btn-primary mt-2" onclick="conf_reception({{ sklblOf.id }})">Confirmer la reception de Scalabel</button></div>
+            {% elseif sklblOrder.sklblStatus > 11 %}
+                <div class="col-3"><button type="button" class="btn btn-success mt-2" disabled>Confirmer la reception de Scalabel</button></div>
+            {% else %}
+                <div class="col-3"><button type="button" class="btn btn-secondary mt-2" disabled>Confirmer la reception de Scalabel</button></div>
+            {% endif %}
             
-             <div class="col-3"><button type="button" class="btn btn-secondary mt-2"  disabled>Confirmer la reception de Scalabel</button></div>   
+                
              <div class="col-1"></div>
         </div>
         
@@ -155,7 +172,7 @@
                                         <th class="alert alert-warning">{{ file.rapproche_fx }}</th>
                                     {% endif %}
                                     
-                                    <th class="alert alert-success">Transféré..</th>
+                                    <th class="alert alert-success">Transféré</th>
                                     {% else %}
                                     <th class="alert alert-warning"> {{ file.client_filename }} </th>
                                     <th class="alert alert-warning"> {{ file.categorie }} </th>
@@ -190,7 +207,7 @@
                                         <th class="alert alert-info">{{ file.rapproche_fx2 }}</th>
                                         <th class="alert alert-info">En reception...</th>
 
-                                        {% elseif file.status == 3 %}
+                                 {% elseif file.status == 3 %}
 
                                         <th class="alert alert-success"> {{ file.client_filename }} </th>
                                         <th class="alert alert-success"> {{ file.categorie }} </th>
@@ -200,7 +217,18 @@
                                         <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
                                         <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
                                         <th class="alert alert-success">{{ file.rapproche_fx2 }}</th>
-                                        <th class="alert alert-success">Receptionné...</th>
+                                        <th class="alert alert-success">Receptionné</th>
+                                {% elseif file.status == 4 %}
+
+                                        <th class="alert alert-success"> {{ file.client_filename }} </th>
+                                        <th class="alert alert-success"> {{ file.categorie }} </th>
+                                        <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-success">{{ file.receptionne_fx2 }}</th>
+                                        <th class="alert alert-success">{{ file.rapproche_fx2 }}</th>
+                                        <th class="alert alert-success">Confirmé</th>
                                     {% endif %}
                             {% endif %}
                         </tr>
@@ -219,15 +247,9 @@
             <table id="fx_table" class="display" style="width:100%;font-size: 0.8em">
                 <thead>
                     <tr>
-                        <th>Lot (sku)</th>
-                        <th>A tisser</th>
                         {% for column in columns %}
-                            {% if column.num > 5 and column.num < 9 %}
-                                    <th>{{ column.columnLabel }}</th>                            
-                            {% endif %}
+                            <th>{{ column.label }}</th>                               
                         {% endfor %}
-                        <th>Identifiant unique</th>
-                        <th>Url</th>
                         <th>Envoyé le</th>
                         <th>Reçu le</th>
                         <th>Statut</th>
@@ -237,23 +259,14 @@
 
                 {% for fx in sklblFx %}
                     <tr>
-                        <th> {{ fx['sku'] }}</th>
-                        <th>{{ fx['sku_tisse'] }}</th>
                         {% for column in columns %}
-                            {% if column.num > 5 and column.num < 9 %}
-                                {% if column.num == 6 %}
-                                        <th>{{ fx['opt_data1'] }}</th>                            
-                                {% endif %}
-                                {% if column.num == 7 %}
-                                        <th>{{ fx['opt_data2'] }}</th>                            
-                                {% endif %}
-                                {% if column.num == 8 %}
-                                        <th>{{ fx['opt_data3'] }}</th>                            
-                                {% endif %}
+                            {% if column.sklblStructure.name == "unique_id" %}
+                                    <th>{{ fx['unique_id'] }}</th>                            
                             {% endif %}
+                            {% if column.sklblStructure.name == "data1" %}<th>{{ fx['data1'] }}</th>{% endif %}
+                            {% if column.sklblStructure.name == "data2" %}<th>{{ fx['data2'] }}</th>{% endif %}
+                            {% if column.sklblStructure.name == "data3" %}<th>{{ fx['data3'] }}</th>{% endif %}
                         {% endfor %}
-                        <th>{{ fx['unique_id'] }}</th>
-                        <th>{{ fx['redirect_url'] }}</th>
                         <th>{{ fx['sent_on'] }}</th>
                         <th>{{ fx['received_on'] }}</th>
                         <th>{{ fx['status'] }}</th>
@@ -263,15 +276,9 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th>Lot (sku)</th>
-                        <th>A tisser</th>
                         {% for column in columns %}
-                            {% if column.num > 5 and column.num < 9 %}
-                                    <th>{{ column.columnLabel }}</th>                            
-                            {% endif %}
+                            <th>{{ column.label }}</th>                               
                         {% endfor %}
-                        <th>Identifiant unique</th>
-                        <th>Url</th>
                         <th>Envoyé le</th>
                         <th>Reçu le</th>
                         <th>Statut</th>

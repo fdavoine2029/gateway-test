@@ -3,6 +3,7 @@
 namespace App\Entity\Sklbl;
 use App\Entity\Articles;
 use App\Entity\Clients;
+use App\Entity\SklblSklblLisageConfig;
 use App\Repository\Sklbl\SklblOrdersRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -79,6 +80,9 @@ class SklblOrders
     #[ORM\OneToMany(mappedBy: 'sklblOrder', targetEntity: SklblUploadConfig::class)]
     private Collection $sklblUploadConfigs;
 
+    #[ORM\OneToMany(mappedBy: 'sklblOrder', targetEntity: SklblLisageConfig::class)]
+    private Collection $sklblLisageConfigs;
+
 
     public function __construct()
     {
@@ -87,6 +91,7 @@ class SklblOrders
         $this->sklblSkus = new ArrayCollection();
         $this->sklbkFxs = new ArrayCollection();
         $this->sklblUploadConfigs = new ArrayCollection();
+        $this->sklblLisageConfigs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -423,6 +428,36 @@ class SklblOrders
             // set the owning side to null (unless already changed)
             if ($sklblUploadConfig->getSklblOrder() === $this) {
                 $sklblUploadConfig->setSklblOrder(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, SklblSklblLisageConfig>
+     */
+    public function getSklblLisageConfigs(): Collection
+    {
+        return $this->sklblLisageConfigs;
+    }
+
+    public function addSklblSklblLisageConfig(SklblLisageConfig $sklblLisageConfig): static
+    {
+        if (!$this->sklblLisageConfigs->contains($sklblLisageConfig)) {
+            $this->sklblLisageConfigs->add($sklblLisageConfig);
+            $sklblLisageConfig->setSklblOrder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSklblSklblLisageConfig(SklblLisageConfig $sklblLisageConfig): static
+    {
+        if ($this->sklblLisageConfigs->removeElement($sklblLisageConfig)) {
+            // set the owning side to null (unless already changed)
+            if ($sklblLisageConfig->getSklblOrder() === $this) {
+                $sklblLisageConfig->setSklblOrder(null);
             }
         }
 

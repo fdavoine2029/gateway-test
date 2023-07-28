@@ -40,18 +40,11 @@ class sklblSkuRepository extends ServiceEntityRepository
         }
     }
 
-    public function countFaconnier(SklblOrders $sklblOrder){
-        return $this->createQueryBuilder('u')
-            ->select('COUNT(DISTINCT u.vendor)')
-            ->where('u.sklblOrder = :orderId')
-            ->setParameter('orderId', $sklblOrder)
-            ->getQuery()
-            ->getSingleScalarResult();
-    }
+
 
     public function countSku(SklblOrders $sklblOrder){
         return $this->createQueryBuilder('u')
-            ->select('COUNT(DISTINCT u.sku)')
+            ->select('COUNT(DISTINCT u.id)')
             ->where('u.sklblOrder = :orderId')
             ->setParameter('orderId', $sklblOrder)
             ->getQuery()

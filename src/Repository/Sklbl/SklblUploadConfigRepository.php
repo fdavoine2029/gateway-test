@@ -76,6 +76,16 @@ class SklblUploadConfigRepository extends ServiceEntityRepository
         ;
     }
 
+    public function purgeConfig($order){
+        return $this->createQueryBuilder('u')
+            ->delete()
+            ->where('u.sklblOrder = ?1')
+            ->setParameter(1, $order)
+            ->getQuery()
+            ->getSingleScalarResult()
+            ;
+    }
+
     /**
      * @return SklblLisageConfig[] Returns an array of SklblLisageConfig objects
      */
@@ -85,6 +95,23 @@ class SklblUploadConfigRepository extends ServiceEntityRepository
             ->andWhere('s.sklblOrder = :sklblOrder')
             ->andWhere('s.categorie = :categorie')
             ->setParameter('sklblOrder', $order)
+            ->setParameter('categorie', 'variable')
+            ->orderBy('s.orderNum', 'ASC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    /**
+     * @return SklblLisageConfig[] Returns an array of SklblLisageConfig objects
+     */
+    public function getModelVariables($model): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.SklblModel = :sklblModel')
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('sklblModel', $model)
             ->setParameter('categorie', 'variable')
             ->orderBy('s.orderNum', 'ASC')
             ->setMaxResults(100)
@@ -124,10 +151,53 @@ class SklblUploadConfigRepository extends ServiceEntityRepository
             ->setParameter('categorie', 'variable')
             ->andWhere('s.customer = :customer')
             ->setParameter('customer', 1)
-            ->orderBy('s.orderNum', 'ASC')
+            ->orderBy('s.customerCsvNum', 'ASC')
             ->setMaxResults(20)
             ->getQuery()
             ->getResult()
+        ;
+    }
+
+    public function findFx1VariablesToGenerate($sklblOrder): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->setParameter('sklblOrder', $sklblOrder)
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('categorie', 'variable')
+            ->andWhere('s.sklblStructure > :sklblStructure')
+            ->setParameter('sklblStructure', 2)
+            ->orderBy('s.customerCsvNum', 'ASC')
+            ->setMaxResults(20)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+
+    public function findAssoc($sklblOrder): ?SklblUploadConfig
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('sklblOrder', $sklblOrder)
+            ->setParameter('categorie', 'assoc')
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
+    public function findUniqIdF2($sklblOrder,$structure): ?SklblUploadConfig
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->andWhere('s.sklblStructure = :sklblStructure')
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('sklblOrder', $sklblOrder)
+            ->setParameter('sklblStructure', $structure)
+            ->setParameter('categorie', 'variable')
+            ->getQuery()
+            ->getOneOrNullResult()
         ;
     }
 
@@ -135,28 +205,46 @@ class SklblUploadConfigRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('s')
             ->andWhere('s.sklblOrder = :sklblOrder')
-            ->setParameter('sklblOrder', $sklblOrder)
             ->andWhere('s.categorie = :categorie')
-            ->setParameter('categorie', 'variable')
             ->andWhere('s.f1 = :f1')
+            ->setParameter('sklblOrder', $sklblOrder)
+            ->setParameter('categorie', 'variable')
             ->setParameter('f1', 1)
-            ->orderBy('s.orderNum', 'ASC')
+            ->orderBy('s.f1CsvNum', 'ASC')
             ->setMaxResults(20)
             ->getQuery()
             ->getResult()
         ;
     }
 
-    public function findF1F2Variables($sklblOrder): array
+    public function findF2Variables($sklblOrder): array
     {
         return $this->createQueryBuilder('s')
             ->andWhere('s.sklblOrder = :sklblOrder')
             ->setParameter('sklblOrder', $sklblOrder)
             ->andWhere('s.categorie = :categorie')
             ->setParameter('categorie', 'variable')
-            ->andWhere('s.f1 = :f1')
-            ->setParameter('f1', 1)
-            ->orderBy('s.orderNum', 'ASC')
+            ->andWhere('s.f2 = :f2')
+            ->setParameter('f2', 1)
+            ->orderBy('s.f2CsvNum', 'ASC')
+            ->setMaxResults(20)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function findF2SupVariables($sklblOrder): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->setParameter('sklblOrder', $sklblOrder)
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('categorie', 'variable')
+            ->andWhere('s.f2 = :f2')
+            ->setParameter('f2', 1)
+            ->andWhere('s.sklblStructure > :sklblStructure')
+            ->setParameter('sklblStructure', 2)
+            ->orderBy('s.f2CsvNum', 'ASC')
             ->setMaxResults(20)
             ->getQuery()
             ->getResult()
@@ -166,28 +254,51 @@ class SklblUploadConfigRepository extends ServiceEntityRepository
 
     
 
-//    /**
-//     * @return SklblUploadConfig[] Returns an array of SklblUploadConfig objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('s.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
 
-//    public function findOneBySomeField($value): ?SklblUploadConfig
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    public function findF1F2Variables($sklblOrder): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblOrder = :sklblOrder')
+            ->setParameter('sklblOrder', $sklblOrder)
+            ->andWhere('s.categorie = :categorie')
+            ->setParameter('categorie', 'variable')
+            ->andWhere('s.f1 = :f1 or s.f2 = :f2')
+            ->setParameter('f1', 1)
+            ->setParameter('f2', 1)
+            ->orderBy('s.f1CsvNum', 'ASC')
+            ->orderBy('s.f2CsvNum', 'ASC')
+            ->setMaxResults(20)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+
+    
+
+    /**
+     * @return SklblUploadConfig[] Returns an array of SklblUploadConfig objects
+     */
+    public function findBySklblModel($value): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.SklblModel = :val')
+            ->setParameter('val', $value)
+            ->orderBy('s.id', 'ASC')
+            ->setMaxResults(10)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function findOneBySklblModel($value): ?SklblUploadConfig
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.SklblModel = :val')
+            ->setParameter('val', $value)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
 }

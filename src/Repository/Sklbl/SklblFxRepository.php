@@ -166,7 +166,7 @@ class SklblFxRepository extends ServiceEntityRepository
     }*/
 
 
-    public function findStep42ATransferer($file): array
+    public function findStep42ATransferer($file,$columnList): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
@@ -191,20 +191,13 @@ class SklblFxRepository extends ServiceEntityRepository
                 trim(fichier1.valeur) AS fichier1,
                 trim(fichier2.valeur) AS fichier2,
                 mini.valeur AS mini,
-                trim(cli.code) AS code_client,
-                trim(sku.sku) AS sku,
-                trim(sku.sku_tisse) AS sku_tisse,
-                trim(sku.opt_data1) AS opt_data1,
-                trim(sku.opt_data2) AS opt_data2,
-                trim(sku.opt_data3) AS opt_data3,
-                trim(sku.opt_data4) AS opt_data4,
-                trim(sku.opt_data5) AS opt_data5,
-                trim(sku.opt_data6) AS opt_data6,
-                trim(sku.opt_data7) AS opt_data7,
-                trim(sku.opt_data8) AS opt_data8,
-                trim(sku.opt_data9) AS opt_data9,
-                trim(sku.opt_data10) AS opt_data10
-                FROM sklbl_fx AS fx
+                trim(cli.code) AS code_client";
+
+        foreach($columnList as $column){
+            $sql = $sql .",fx.".$column->getSklblStructure()->getName();
+        }
+            
+        $sql = $sql ." FROM sklbl_fx AS fx
                 LEFT JOIN sklbl_of AS ofs ON ofs.id = fx.sklbl_of_id
                 LEFT JOIN sklbl_orders AS orders ON orders.id = ofs.sklbl_order_id
                 LEFT JOIN clients AS cli ON cli.id = ofs.client_id
@@ -229,18 +222,25 @@ class SklblFxRepository extends ServiceEntityRepository
         return $resultSet->fetchAllAssociative();
     }
 
-    public function findFreeFx($fx2): ?SklblFx
+    public function findFreeFx($fx2,$keyAssoc)//: ?array
     {
-        return $this->createQueryBuilder('s')
-            ->where('s.status = :status')
-            ->andWhere('s.uniqueId is null')
-            ->andWhere('s.sklblSku = :sku')
-            ->setParameter('sku', $fx2->getSku())
-            ->setParameter('status', 5)
-            ->getQuery()
-            ->setMaxResults(1)
-            ->getOneOrNullResult()
-        ;
+        
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "select fx.id
+                from sklbl_fx as fx
+                left join sklbl_fx2 as fx2
+                on fx2.". $keyAssoc->getValue() ." = fx.". $keyAssoc->getValue() ."
+                where fx.status = 5
+                and fx.unique_id is null
+                and fx.sklbl_of_id = ". $fx2->getSklblOf()->getId()."
+                and (fx.". $keyAssoc->getValue() ." is not null or fx.". $keyAssoc->getValue() ." <> '')
+                limit 1";
+
+        $stmt = $conn->prepare($sql);
+        $resultSet = $stmt->executeQuery();
+ 
+        // returns an array of arrays (i.e. a raw data set)
+        return $resultSet->fetchAllAssociative();
     }
 
     public function countFxNotAssociated($of){

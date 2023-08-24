@@ -11,6 +11,7 @@ use App\Entity\Sklbl\SklblFx;
 use App\Entity\Sklbl\SklblFx2;
 use App\Entity\Sklbl\SklblLisageConfig;
 use App\Entity\Sklbl\SklblLogs;
+use App\Entity\Sklbl\SklblModel;
 use App\Entity\Sklbl\SklblOf;
 use App\Entity\Sklbl\SklblOrders;
 use App\Entity\Sklbl\SklblRubrique;
@@ -19,7 +20,9 @@ use App\Entity\Sklbl\SklblUploadConfig;
 use App\Form\Sklbl\SklblFilesFormType;
 use App\Form\Sklbl\SklblLisageFormType;
 use App\Form\Sklbl\SklblMajorationFormType;
+use App\Form\Sklbl\SklblUploadConfigForm2Type;
 use App\Form\Sklbl\SklblUploadConfigFormType;
+use App\Form\Sklbl\SklblUploadModelFormType;
 use App\Message\SendNotification;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Doctrine\Persistence\ManagerRegistry;
@@ -32,6 +35,8 @@ use App\Repository\Sklbl\SklblFilesRepository;
 use App\Repository\Sklbl\SklblFx2Repository;
 use App\Repository\Sklbl\SklblFxRepository;
 use App\Repository\Sklbl\SklblLisageConfigRepository;
+use App\Repository\Sklbl\SklblLogsRepository;
+use App\Repository\Sklbl\SklblModelRepository;
 use App\Repository\Sklbl\SklblOfRepository;
 use App\Repository\Sklbl\SklblOrdersRepository;
 use App\Repository\Sklbl\SklblRubriqueRepository;
@@ -39,14 +44,9 @@ use App\Repository\Sklbl\sklblSkuRepository;
 use App\Repository\Sklbl\SklblStructureRepository;
 use App\Repository\Sklbl\SklblUploadConfigRepository;
 use App\Service\sklbl\SklblExcelService;
-use App\Service\sklbl\SklblFileCustomerService;
-use App\Service\sklbl\SklblStep1Service;
-use App\Service\sklbl\SklblStep41Service;
-use App\Service\sklbl\SklblStep42Service;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use FOS\RestBundle\Request\ParamFetcherInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -59,6 +59,14 @@ use Symfony\Component\Messenger\MessageBusInterface;
 #[Route('/sklbl', name: 'sklbl_')]
 class ScalabelController extends AbstractController
 {
+
+
+
+    /*************************************************Affichage de la liste des commandes****************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
+
     #[Route('/showOfs/{hide?1}', name: 'index')]
     public function index(SklblOfRepository $sklblOfRepository, int $hide): Response
     {
@@ -70,6 +78,25 @@ class ScalabelController extends AbstractController
         ]);
     }
 
+    /*************************************************Affichage des logs*********************************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
+    #[Route('/show_logs/{order_id}', name: 'show_logs')]
+    public function show_logs(
+        SklblLogsRepository $sklblLogsRepository,
+        SklblOrdersRepository $sklblOrdersRepository,
+        $order_id
+    ): Response{
+        $sklblOrder = $sklblOrdersRepository->find($order_id);
+        $logs = $sklblLogsRepository->findBySklblOrder($sklblOrder);
+        
+        return $this->render('sklbl/scalabel/logs.html.twig', [
+            'controller_name' => 'ScalabelController',
+            'sklblOrder' => $sklblOrder,
+            'logs' => $logs
+        ]);
+    }
 
     /*************************************************Page de configuration******************************************
      *                                                                                                              *
@@ -80,7 +107,7 @@ class ScalabelController extends AbstractController
     public function initConf(SklblOrders $sklblOrder
     ,SklblStructureRepository $sklblStructureRepository
     ,EntityManagerInterface $entityManager){
-
+            $excel = new SklblExcelService();
             $order = $sklblStructureRepository->find(1);
             $variable = new SklblUploadConfig();
             $variable->setSklblOrder($sklblOrder);
@@ -94,12 +121,12 @@ class ScalabelController extends AbstractController
             $variable->setCustomer(1);
             $variable->setF1(0);
             $variable->setCustomerCsv('A');
+            $variable->setCustomerCsvNum($excel->alphaNum2('A'));                                                
             $variable->setF2(0);
             $variable->setF3(0);
             $variable->setF4(0);
             $variable->setF5(0);
             $variable->setLisage(0);
-
 
             $uniq_id = $sklblStructureRepository->find(2);
             $variable2 = new SklblUploadConfig();
@@ -114,31 +141,333 @@ class ScalabelController extends AbstractController
             $variable2->setCustomer(0);
             $variable2->setF1(1);
             $variable2->setF1Csv('A');
+            $variable->setF1CsvNum($excel->alphaNum2('A'));    
             $variable2->setF2(0);
             $variable2->setF3(0);
             $variable2->setF4(0);
             $variable2->setF5(0);
             $variable2->setLisage(0);
 
+
             $entityManager->persist($variable);
             $entityManager->persist($variable2);
             $entityManager->flush($variable);
             $entityManager->flush($variable2);
+            
     }
 
-    #[Route('/step_conf/{order_id}/{action}', name: 'step_conf')]
+    #[Route('/step_conf_add_model/{order_id}/{name}', name: 'step_conf_add_model')]
+    public function step_conf_add_model(
+        SklblOrdersRepository $sklblOrdersRepository,
+        SklblUploadConfigRepository $sklblUploadConfigRepository,
+        SklblStructureRepository $sklblStructureRepository,
+        SklblModelRepository $sklblModelRepository, 
+        EntityManagerInterface $entityManager,
+        $order_id,
+        $name){
+            try{
+                $sklblOrder = $sklblOrdersRepository->find($order_id);
+                $nb_column = $sklblUploadConfigRepository->countVariable($sklblOrder);
+                $model = $sklblModelRepository->findOneByName($name);
+                if(!$model){
+                    $model = new SklblModel();
+                    $model->setName($name);
+                    $entityManager->persist($model);
+                    $entityManager->flush($model);
+
+                    $excel = new SklblExcelService();
+                    $order = $sklblStructureRepository->find(1);
+                    $variable = new SklblUploadConfig();
+                    $variable->setCategorie('variable');
+                    $variable->setSklblStructure($order);
+                    $variable->setLabel('Qté commandée');
+                    $variable->setFormat('numerique');
+                    $variable->setUniqueValue(0);
+                    $variable->setOrderNum(1);
+                    $variable->setSklblModel($model);
+
+                    $variable->setCustomer(1);
+                    $variable->setF1(0);
+                    $variable->setCustomerCsv('A');
+                    $variable->setCustomerCsvNum($excel->alphaNum2('A'));                                                
+                    $variable->setF2(0);
+                    $variable->setF3(0);
+                    $variable->setF4(0);
+                    $variable->setF5(0);
+                    $variable->setLisage(0);
+
+
+
+                    $uniq_id = $sklblStructureRepository->find(2);
+                    $variable2 = new SklblUploadConfig();
+                    $variable2->setCategorie('variable');
+                    $variable2->setSklblStructure($uniq_id);
+                    $variable2->setLabel('Id etiquette');
+                    $variable2->setFormat('texte');
+                    $variable2->setUniqueValue(1);
+                    $variable2->setOrderNum(1);
+                    $variable2->setSklblModel($model);
+                    $variable2->setCustomer(0);
+                    $variable2->setF1(1);
+                    $variable2->setF1Csv('A');
+                    $variable->setF1CsvNum($excel->alphaNum2('A'));    
+                    $variable2->setF2(0);
+                    $variable2->setF3(0);
+                    $variable2->setF4(0);
+                    $variable2->setF5(0);
+                    $variable2->setLisage(0);
+
+
+                    $entityManager->persist($variable);
+                    $entityManager->persist($variable2);
+                    $entityManager->flush($variable);
+                    $entityManager->flush($variable2);
+                }
+                $this->addFlash('success','Modèle ajouté avec succès');
+
+                //************ */ Debut ajout log*****************
+                $log = new SklblLogs();
+                $log->setJobName('Configuration: Ajout modèle');
+                $log->setMode('Manuel');
+                $log->setMessage('Ajout du modèle '.$name);
+                $log->setSklblOrder($sklblOrder);
+                $log->setExecutedAt(new DateTimeImmutable());
+                $log->setProgress(100);
+                $log->setStatus(1);
+                $log->setUser($this->getUser());
+                $entityManager->persist($log);
+                $entityManager->flush($log);
+                //************ */ Fin ajout log*****************
+
+                return $this->redirectToRoute('sklbl_step_conf', [
+                    'order_id' => $order_id,
+                    'model_id' => $model->getId(),
+                    'nbColumn' => $nb_column,
+                    'action' => 'none'
+                ]);
+            } catch (Exception $e) {
+                $this->addFlash('error','Erreur lors de l\'ajout du modèle');
+
+                //************ */ Debut ajout log*****************
+                $log = new SklblLogs();
+                $log->setJobName('Configuration: Ajout modèle');
+                $log->setMode('Manuel');
+                $log->setMessage('Ajout du modèle '.$name);
+                $log->setSklblOrder($sklblOrder);
+                $log->setExecutedAt(new DateTimeImmutable());
+                $log->setProgress(0);
+                $log->setStatus(0);
+                $log->setUser($this->getUser());
+                $entityManager->persist($log);
+                $entityManager->flush($log);
+                //************ */ Fin ajout log*****************
+
+                return $this->redirectToRoute('sklbl_step_conf', [
+                    'order_id' => $order_id,
+                    'nbColumn' => $nb_column,
+                    'action' => 'none'
+                ]);
+            }
+
+    }
+
+    #[Route('/step_conf_delete_model/{order_id}/{id}', name: 'step_conf_delete_model')]
+    public function step_conf_delete_model(
+        SklblOrdersRepository $sklblOrdersRepository,
+        SklblUploadConfigRepository $sklblUploadConfigRepository,
+        SklblModelRepository $sklblModelRepository, 
+        EntityManagerInterface $entityManager,
+        $order_id,
+        $id){
+            try{
+                $sklblOrder = $sklblOrdersRepository->find($order_id);
+                $nb_column = $sklblUploadConfigRepository->countVariable($sklblOrder);
+                $model = $sklblModelRepository->find($id);
+                $name = $model->getName();
+                if($model){
+                    $configs = $sklblUploadConfigRepository->findBySklblModel($model);
+                    foreach($configs as $config){
+                        $entityManager->remove($config);
+                        $entityManager->flush($config);
+                    }
+                    $entityManager->remove($model);
+                    $entityManager->flush($model);
+                }
+                $this->addFlash('success','Modèle supprimé succès');
+
+                //************ */ Debut ajout log*****************
+                $log = new SklblLogs();
+                $log->setJobName('Configuration: Suppression modèle');
+                $log->setMode('Manuel');
+                $log->setMessage('Suppression du modèle '.$name);
+                $log->setSklblOrder($sklblOrder);
+                $log->setExecutedAt(new DateTimeImmutable());
+                $log->setProgress(100);
+                $log->setStatus(1);
+                $log->setUser($this->getUser());
+                $entityManager->persist($log);
+                $entityManager->flush($log);
+                //************ */ Fin ajout log*****************
+
+                return $this->redirectToRoute('sklbl_step_conf', [
+                    'order_id' => $order_id,
+                    'nbColumn' => $nb_column,
+                    'action' => 'none'
+                ]);
+            } catch (Exception $e) {
+                $this->addFlash('error','Erreur lors de la suppression du modèle');
+
+                //************ */ Debut ajout log*****************
+                $log = new SklblLogs();
+                $log->setJobName('Configuration: Suppression modèle');
+                $log->setMode('Manuel');
+                $log->setMessage('Ajout du modèle '.$name);
+                $log->setSklblOrder($sklblOrder);
+                $log->setExecutedAt(new DateTimeImmutable());
+                $log->setProgress(0);
+                $log->setStatus(0);
+                $log->setUser($this->getUser());
+                $entityManager->persist($log);
+                $entityManager->flush($log);
+                //************ */ Fin ajout log*****************
+
+                return $this->redirectToRoute('sklbl_step_conf', [
+                    'order_id' => $order_id,
+                    'nbColumn' => $nb_column,
+                    'action' => 'none'
+                ]);
+            }
+
+    }
+
+    #[Route('/step_conf_save_model/{order_id}/{id}', name: 'step_conf_save_model')]
+    public function step_conf_save_model(
+        SklblOrdersRepository $sklblOrdersRepository,
+        SklblUploadConfigRepository $sklblUploadConfigRepository,
+        SklblModelRepository $sklblModelRepository, 
+        EntityManagerInterface $entityManager,
+        $order_id,
+        $id){
+            try{
+                $sklblOrder = $sklblOrdersRepository->find($order_id);
+                $nb_column = $sklblUploadConfigRepository->countVariable($sklblOrder);
+                $model = $sklblModelRepository->find($id);
+                $name = $model->getName();
+                if($model){
+                    // On supprime l'ancienne config
+                    $old_configs = $sklblUploadConfigRepository->findBySklblModel($model);
+                    foreach($old_configs as $old_config){
+                        $entityManager->remove($old_config);
+                        $entityManager->flush($old_config);
+                    }
+
+
+                    // On sauvegarde le nouveau modèle
+
+                    $new_configs = $sklblUploadConfigRepository->findBySklblOrder($order_id);
+                    foreach($new_configs as $new_config){
+
+                        $variable = new SklblUploadConfig();
+                        $variable->setCategorie($new_config->getCategorie());
+                        $variable->setSklblStructure($new_config->getSklblStructure());
+                        $variable->setLabel($new_config->getLabel());
+                        $variable->setFormat($new_config->getFormat());
+                        $variable->setUniqueValue($new_config->getUniqueValue());
+                        $variable->setOrderNum($new_config->getOrderNum());
+
+                        $variable->setCustomer($new_config->getCustomer());
+                        $variable->setF1($new_config->getF1());   
+                        $variable->setF2($new_config->getF2());
+                        $variable->setF3($new_config->getF3());
+                        $variable->setF4($new_config->getF4());
+                        $variable->setF5($new_config->getF5());
+                        $variable->setLisage($new_config->getLisage());
+
+                        $variable->setCustomerCsv($new_config->getCustomerCsv());
+                        $variable->setCustomerCsvNum($new_config->getCustomerCsvNum()); 
+                        $variable->setF1Csv($new_config->getF1Csv());
+                        $variable->setF1CsvNum($new_config->getF1CsvNum()); 
+                        $variable->setF2Csv($new_config->getF2Csv());
+                        $variable->setF2CsvNum($new_config->getF2CsvNum()); 
+                        $variable->setF3Csv($new_config->getF3Csv());
+                        $variable->setF3CsvNum($new_config->getF3CsvNum()); 
+                        $variable->setF4Csv($new_config->getF4Csv());
+                        $variable->setF4CsvNum($new_config->getF4CsvNum()); 
+                        $variable->setF5Csv($new_config->getF5Csv());
+                        $variable->setF5CsvNum($new_config->getF5CsvNum()); 
+                        $variable->setLisageCsv($new_config->getLisageCsv());
+                        $variable->setLisageCsvNum($new_config->getLisageCsvNum());
+
+                        $variable->setSklblModel($model);
+                        $entityManager->persist($variable);
+                        $entityManager->flush($variable);
+
+                    }
+
+                }
+                $this->addFlash('success','Modèle sauvegardé avec succès');
+
+                //************ */ Debut ajout log*****************
+                $log = new SklblLogs();
+                $log->setJobName('Configuration: Sauvegarde modèle');
+                $log->setMode('Manuel');
+                $log->setMessage('Sauvegarde du modèle '.$name);
+                $log->setSklblOrder($sklblOrder);
+                $log->setExecutedAt(new DateTimeImmutable());
+                $log->setProgress(100);
+                $log->setStatus(1);
+                $log->setUser($this->getUser());
+                $entityManager->persist($log);
+                $entityManager->flush($log);
+                //************ */ Fin ajout log*****************
+
+                return $this->redirectToRoute('sklbl_step_conf', [
+                    'order_id' => $order_id,
+                    'nbColumn' => $nb_column,
+                    'action' => 'none'
+                ]);
+            } catch (Exception $e) {
+                $this->addFlash('error','Erreur lors de la sauvegarde du modèle');
+
+                //************ */ Debut ajout log*****************
+                $log = new SklblLogs();
+                $log->setJobName('Configuration: Sauvegarde modèle');
+                $log->setMode('Manuel');
+                $log->setMessage('Sauvegarde du modèle '.$name);
+                $log->setSklblOrder($sklblOrder);
+                $log->setExecutedAt(new DateTimeImmutable());
+                $log->setProgress(0);
+                $log->setStatus(0);
+                $log->setUser($this->getUser());
+                $entityManager->persist($log);
+                $entityManager->flush($log);
+                //************ */ Fin ajout log*****************
+
+                return $this->redirectToRoute('sklbl_step_conf', [
+                    'order_id' => $order_id,
+                    'nbColumn' => $nb_column,
+                    'action' => 'none'
+                ]);
+            }
+    }
+
+    #[Route('/step_conf/{order_id}/{action}/{model_id?0}/{load_model?0}', name: 'step_conf')]
     public function step_conf(
         SklblOrdersRepository $sklblOrdersRepository,
         SklblUploadConfigRepository $sklblUploadConfigRepository,
         SklblStructureRepository $sklblStructureRepository,
+        SklblModelRepository $sklblModelRepository,
         EntityManagerInterface $entityManager,
         Request $request,
         $order_id,
+        $model_id,
+        $load_model,
         $action)
     {
+        $excel = new SklblExcelService();
         $sklblOrder = $sklblOrdersRepository->find($order_id);
         $client = $sklblOrder->getClient();
-
+        $orderNum = $sklblOrder->getOrderNum();
         // Si aucune variable n'est enregistrée, on initialise la conf
         
         $nb_column = $sklblUploadConfigRepository->countVariable($sklblOrder);
@@ -147,17 +476,30 @@ class ScalabelController extends AbstractController
             $nb_column++;
         }
 
-
-
-        if($nb_column > 0){
-            $variables = $sklblUploadConfigRepository->getVariables($sklblOrder);
+        //Si on charge un modèle
+        if($load_model == 1){
+            $model = $sklblModelRepository->find($model_id);
+            $variables = $sklblUploadConfigRepository->getModelVariables($model);
             $ind = 1;
             foreach($variables as $variable){
                 $items['variable'.$ind] = $variable;
                 $ind ++;
             }
             $nb_column = $ind;
+        }else{
+            // sinon on prend la conf de la commande
+            if($nb_column > 0){
+                $variables = $sklblUploadConfigRepository->getVariables($sklblOrder);
+                $ind = 1;
+                foreach($variables as $variable){
+                    $items['variable'.$ind] = $variable;
+                    $ind ++;
+                }
+                $nb_column = $ind;
+            }
         }
+
+        
         
 
         if($action == 'add' || ($action == 'none') && $nb_column == 0){
@@ -165,6 +507,19 @@ class ScalabelController extends AbstractController
             $variable = new SklblUploadConfig();
             $items['variable'.$nb_column] = $variable;  
         }
+
+        //Construction du formulaire de modèle
+        if($model_id > 0){
+            $model = $sklblModelRepository->find($model_id);
+            $repo = $sklblUploadConfigRepository->findOneBySklblModel($model);
+        }else{
+            $repo = new SklblUploadConfig();
+        }
+        
+        $formModel = $this->createForm(SklblUploadModelFormType::class, $repo);
+
+
+        //Construction du formulaire de la structure des champs
      
         
         $form = $this->createFormBuilder($items);
@@ -175,89 +530,224 @@ class ScalabelController extends AbstractController
             ]);
             $numvar ++;
         }
-
         $form = $form->getForm();
+
+
+        //Construction du formulaire de l'association de F1 et F2
+        $variablesAssoc = $sklblUploadConfigRepository->findAssoc($sklblOrder);
+        if(!$variablesAssoc){
+            $variablesAssoc = new SklblUploadConfig();
+        }
+        $form2 = $this->createForm(SklblUploadConfigForm2Type::class, $variablesAssoc);
+
+
+        
         $form->handleRequest($request);
             if ($form->isSubmitted() && $form->isValid()) {
-                $num = 1;
-                foreach($form as $record){
-                    $id = $record->get('id')->getData();
-   
-                    if($id){
-                        $variable = $sklblUploadConfigRepository->find($record->get('id')->getData());
-                    }else{
-                        $variable = new SklblUploadConfig();
-                    }
-  
+                try{
 
-                    if($record->get('delete')->isClicked()){
-                        $entityManager->remove($variable);
-                        $entityManager->flush($variable);
-                    }else{
-                        
-                        $variable->setSklblOrder($sklblOrder);
-                        $variable->setCategorie('variable');
-                        $variable->setSklblStructure($record->get('sklblStructure')->getData());
-                        $variable->setLabel($record->get('label')->getData());
-                        $variable->setFormat($record->get('format')->getData());
-                        $variable->setUniqueValue($record->get('uniqueValue')->getData());
-                        $variable->setOrderNum($num);
-
-                        $variable->setCustomer($record->get('customer')->getData());
-                        $variable->setF1($record->get('f1')->getData());
-                        $variable->setF2($record->get('f2')->getData());
-                        $variable->setF3($record->get('f3')->getData());
-                        $variable->setF4($record->get('f4')->getData());
-                        $variable->setF5($record->get('f5')->getData());
-                        $variable->setLisage($record->get('lisage')->getData());
-
-                        $variable->setCustomerCsv($record->get('customerCsv')->getData());
-                        $variable->setF1Csv($record->get('f1Csv')->getData());
-                        $variable->setF2Csv($record->get('f2Csv')->getData());
-                        $variable->setF3Csv($record->get('f3Csv')->getData());
-                        $variable->setF4Csv($record->get('f4Csv')->getData());
-                        $variable->setF5Csv($record->get('f5Csv')->getData());
-                        $variable->setLisageCsv($record->get('lisageCsv')->getData());
-
-                        $entityManager->persist($variable);
-                        $entityManager->flush($variable);
+                    $num = 1;
+                    $old_configs = $sklblUploadConfigRepository->findBySklblOrder($sklblOrder);
+                    foreach($old_configs as $old_config){
+                        if($old_config->getCategorie() == 'variable'){
+                            $entityManager->remove($old_config);
+                            $entityManager->flush($old_config);
+                        }
                         
                     }
-                    $num ++;
 
+                    foreach($form as $record){
+                        if(!$record->get('delete')->isClicked()){
+
+                            $variable = new SklblUploadConfig();
+                            $variable->setSklblOrder($sklblOrder);
+                            $variable->setCategorie('variable');
+                            $variable->setSklblStructure($record->get('sklblStructure')->getData());
+                            $variable->setLabel($record->get('label')->getData());
+                            $variable->setFormat($record->get('format')->getData());
+                            $variable->setUniqueValue($record->get('uniqueValue')->getData());
+                            $variable->setOrderNum($num);
+
+                            $variable->setCustomer($record->get('customer')->getData());
+                            $variable->setF1($record->get('f1')->getData());   
+                            $variable->setF2($record->get('f2')->getData());
+                            $variable->setF3($record->get('f3')->getData());
+                            $variable->setF4($record->get('f4')->getData());
+                            $variable->setF5($record->get('f5')->getData());
+                            $variable->setLisage($record->get('lisage')->getData());
+
+                            $variable->setCustomerCsv($record->get('customerCsv')->getData());
+                            $variable->setCustomerCsvNum($excel->alphaNum2($record->get('customerCsv')->getData())); 
+                            $variable->setF1Csv($record->get('f1Csv')->getData());
+                            $variable->setF1CsvNum($excel->alphaNum2($record->get('f1Csv')->getData())); 
+                            $variable->setF2Csv($record->get('f2Csv')->getData());
+                            $variable->setF2CsvNum($excel->alphaNum2($record->get('f2Csv')->getData())); 
+                            $variable->setF3Csv($record->get('f3Csv')->getData());
+                            $variable->setF3CsvNum($excel->alphaNum2($record->get('f3Csv')->getData())); 
+                            $variable->setF4Csv($record->get('f4Csv')->getData());
+                            $variable->setF4CsvNum($excel->alphaNum2($record->get('f4Csv')->getData())); 
+                            $variable->setF5Csv($record->get('f5Csv')->getData());
+                            $variable->setF5CsvNum($excel->alphaNum2($record->get('f5Csv')->getData())); 
+                            $variable->setLisageCsv($record->get('lisageCsv')->getData());
+                            $variable->setLisageCsvNum($excel->alphaNum2($record->get('lisageCsv')->getData()));
+
+                            $entityManager->persist($variable);
+                            $entityManager->flush($variable);
+                            
+                        }
+                        $num ++;
+
+                        
+                    }
+
+                    if($sklblOrder->getSklblStatus() < 1){
+                        $sklblOrder->setSklblStatus(1);
+                        $entityManager->persist($sklblOrder);
+                        $entityManager->flush($sklblOrder);
+                    }
                     
-                }
+                    $this->addFlash('success','Configuration de la commande ' .$sklblOrder->getOrderNum() . ' sauvegardée avec succès');
 
-                if($sklblOrder->getStatus() < 1){
-                    $sklblOrder->setSklblStatus(1);
-                    $entityManager->persist($sklblOrder);
-                    $entityManager->flush($sklblOrder);
-                }
-                
+                    //************ */ Debut ajout log*****************
+                    $log = new SklblLogs();
+                    $log->setJobName('Configuration: Enregistrement configuration');
+                    $log->setMode('Manuel');
+                    $log->setMessage('Enregistrement de la configuration de la commande '.$orderNum);
+                    $log->setSklblOrder($sklblOrder);
+                    $log->setExecutedAt(new DateTimeImmutable());
+                    $log->setProgress(100);
+                    $log->setStatus(1);
+                    $log->setUser($this->getUser());
+                    $entityManager->persist($log);
+                    $entityManager->flush($log);
+                    //************ */ Fin ajout log*****************
 
-                if($request->request->get('conf_submit') == 'add'){
-                    return $this->redirectToRoute('sklbl_step_conf', [
-                        'order_id' => $order_id,
-                        'nbColumn' => $nb_column,
-                        'action' => 'add'
-                    ]);
-                    
-                }else{
+                    if($request->request->get('conf_submit') == 'add'){
+                        return $this->redirectToRoute('sklbl_step_conf', [
+                            'order_id' => $order_id,
+                            'nbColumn' => $nb_column,
+                            'action' => 'add'
+                        ]);
+                        
+                    }else{
+                        return $this->redirectToRoute('sklbl_step_conf', [
+                            'order_id' => $order_id,
+                            'nbColumn' => $nb_column,
+                            'action' => 'none'
+                        ]);
+                    }
+                } catch (Exception $e) {
+                    $this->addFlash('error','Erreur lors de la sauvegarde du modèle');
+    
+                    //************ */ Debut ajout log*****************
+                    $log = new SklblLogs();
+                    $log->setJobName('Configuration: Enregistrement configuration');
+                    $log->setMode('Manuel');
+                    $log->setMessage('Enregistrement de la configuration de la commande '.$orderNum);
+                    $log->setSklblOrder($sklblOrder);
+                    $log->setExecutedAt(new DateTimeImmutable());
+                    $log->setProgress(0);
+                    $log->setStatus(0);
+                    $log->setUser($this->getUser());
+                    $entityManager->persist($log);
+                    $entityManager->flush($log);
+                    //************ */ Fin ajout log*****************
+    
                     return $this->redirectToRoute('sklbl_step_conf', [
                         'order_id' => $order_id,
                         'nbColumn' => $nb_column,
                         'action' => 'none'
                     ]);
                 }
+
+
+            }
+            
+            $form2->handleRequest($request);
+            if ($form2->isSubmitted() && $form2->isValid()) {
+                try{
+                    $variablesAssoc = $sklblUploadConfigRepository->findAssoc($sklblOrder);
+                    if(!$variablesAssoc){
+                        $variablesAssoc = new SklblUploadConfig();
+                    }
+                    $structure = $form2->get('id')->getData();
+
+                    $variablesAssoc->setSklblOrder($sklblOrder);
+                    $variablesAssoc->setCategorie('assoc');
+                    $variablesAssoc->setSklblStructure($structure->getSklblStructure());
+                    $variablesAssoc->setValue($structure->getSklblStructure()->getName());
+                    $variablesAssoc->setLabel($structure->getLabel());
+                    $variablesAssoc->setFormat('text');
+                    $variablesAssoc->setOrderNum(1);
+                    $variablesAssoc->setCustomer(0);
+                    $variablesAssoc->setF1(0);   
+                    $variablesAssoc->setF2(0);   
+                    $variablesAssoc->setF3(0);   
+                    $variablesAssoc->setF4(0);   
+                    $variablesAssoc->setF5(0);   
+                    $variablesAssoc->setLisage(0);   
+                    $variablesAssoc->setUniqueValue(0);
+                    $entityManager->persist($variablesAssoc);
+                    $entityManager->flush($variablesAssoc);
+
+
+                    $this->addFlash('success','Association F1/F2 sauvegardée');
+
+                    //************ */ Debut ajout log*****************
+                    $log = new SklblLogs();
+                    $log->setJobName('Configuration: Enregistrement configuration');
+                    $log->setMode('Manuel');
+                    $log->setMessage('Enregistrement de l\'association F1/F2 de la commande '.$orderNum);
+                    $log->setSklblOrder($sklblOrder);
+                    $log->setExecutedAt(new DateTimeImmutable());
+                    $log->setProgress(100);
+                    $log->setStatus(1);
+                    $log->setUser($this->getUser());
+                    $entityManager->persist($log);
+                    $entityManager->flush($log);
+                    //************ */ Fin ajout log*****************
+                    return $this->redirectToRoute('sklbl_step_conf', [
+                        'order_id' => $order_id,
+                        'nbColumn' => $nb_column,
+                        'action' => 'none'
+                    ]);
+                } catch (Exception $e) {
+                    $this->addFlash('error','Erreur lors de l\'association F1/F2 ');
+    
+                    //************ */ Debut ajout log*****************
+                    $log = new SklblLogs();
+                    $log->setJobName('Configuration: Enregistrement configuration');
+                    $log->setMode('Manuel');
+                    $log->setMessage('Enregistrement de l\'association F1/F2 de la commande '.$orderNum);
+                    $log->setSklblOrder($sklblOrder);
+                    $log->setExecutedAt(new DateTimeImmutable());
+                    $log->setProgress(0);
+                    $log->setStatus(0);
+                    $log->setUser($this->getUser());
+                    $entityManager->persist($log);
+                    $entityManager->flush($log);
+                    //************ */ Fin ajout log*****************
+    
+                    return $this->redirectToRoute('sklbl_step_conf', [
+                        'order_id' => $order_id,
+                        'nbColumn' => $nb_column,
+                        'action' => 'none'
+                    ]);
+                }
+
             }
 
 
         return $this->render('sklbl/scalabel/step_conf.html.twig', [
             'sklblOrder' => $sklblOrder,
             'client' => $client,
+            'formModel' => $formModel->createView(),
             'form' => $form->createView(),
+            'form2' => $form2->createView(),
             'nbColumn' => $nb_column
         ]);
+        
+        
 
     }
 
@@ -320,17 +810,53 @@ class ScalabelController extends AbstractController
                     $sklblFiles->setStatus(0);
                     $entityManager->persist($sklblFiles);
                     $entityManager->flush();
-
-                    $sklblOrder->setSklblStatus(1);
-                    $entityManager->persist($sklblOrder);
-                    $entityManager->flush();
+                    if($sklblOrder->getSklblStatus() < 1){
+                        $sklblOrder->setSklblStatus(1);
+                        $entityManager->persist($sklblOrder);
+                        $entityManager->flush();
+                    }
+                    
 
                     $this->addFlash('success','Fichier ' . $newFilename . ' soumis avec succès');
+
+                    //************ */ Debut ajout log*****************
+                    $log = new SklblLogs();
+                    $log->setJobName('step_1: Demande de chargement fichier client');
+                    $log->setMode('Manuel');
+                    $log->setMessage('Succès de la demande de chargement du fichier '.$newFilename);
+                    $log->setSklblOrder($sklblOrder);
+                    $log->setExecutedAt(new DateTimeImmutable());
+                    $log->setProgress(0);
+                    $log->setStatus(1);
+                    $log->setUser($this->getUser());
+                    $entityManager->persist($log);
+                    $entityManager->flush($log);
+                    //************ */ Fin ajout log*****************
+
                     return $this->redirectToRoute('sklbl_step_1', [
                         'order_id' => $order_id
                     ]);
                 } catch (FileException $e) {
                     $this->addFlash('error','Erreur chargement fichier');
+
+                    //************ */ Debut ajout log*****************
+                    $log = new SklblLogs();
+                    $log->setJobName('step_1: Demande de chargement fichier client');
+                    $log->setMode('Manuel');
+                    $log->setMessage('Erreur demande de chargement du fichier '.$newFilename);
+                    $log->setSklblOrder($sklblOrder);
+                    $log->setExecutedAt(new DateTimeImmutable());
+                    $log->setProgress(0);
+                    $log->setStatus(0);
+                    $log->setUser($this->getUser());
+                    $entityManager->persist($log);
+                    $entityManager->flush($log);
+                    //************ */ Fin ajout log*****************
+
+                    return $this->redirectToRoute('sklbl_step_1', [
+                        'order_id' => $order_id
+                    ]);
+
                 }
             }
 
@@ -348,12 +874,9 @@ class ScalabelController extends AbstractController
             'files' => $files,
             'fileForm' => $form->createView()
         ]);
+        
 
     }
-
-    
-
-
 
 
     #[Route('/api/step_1', name: 'api_step_1', methods:['post'] )]
@@ -367,12 +890,11 @@ class ScalabelController extends AbstractController
     {
         // On liste les commandes en cours
         $orders = $sklblOrdersRepository->getCurrentOrders();
-        $log = new SklblLogs();
+        //************ */ Fin ajout log*****************
         foreach($orders as $order){
             // Pour chaque commande on vérifier si des demandes de transfert ont été enregistrées
             // On compte également les fichiers déja transférés pour vérifier à la fin que tous les fichiers sont chargés et ok
             $files = $sklblFilesRepository->getFileAIntegrerList($order);
-            $filesDejaChargés = $sklblFilesRepository->getFileATransfereList($order);
             $countFilesACharger = sizeof($files); 
 
             // On récupère les colonnes
@@ -385,6 +907,19 @@ class ScalabelController extends AbstractController
             if($countFilesACharger > 0){
                 // On parcourt chaque fichier à charger
                 foreach($files as $file){
+                    // Initialistion du log
+                    $log = new SklblLogs();
+                    $log->setJobName('step_1: Chargement du fichier client');
+                    $log->setMode('Auto');
+                    $log->setMessage('Chargement du fichier '.$file->getClientFilename());
+                    $log->setSklblOrder($order);
+                    $log->setExecutedAt(new DateTimeImmutable());
+                    $log->setProgress(0);
+                    $log->setStatus(2);
+                    $log->setUser($this->getUser());
+                    $entityManager->persist($log);
+                    $entityManager->flush($log);
+
                     $filePresent = true;
                     $fileContientEnregistrements = true;
                     $path = $this->getParameter('sklbl_fichier_client_a_charger').'/'.$file->getClientFilename();
@@ -397,10 +932,8 @@ class ScalabelController extends AbstractController
                     try {
                         $records = $excelService->integrateCustomerFile($order,$path);
                     } catch (Exception $e) {
-                        $log->setExecutedAt(new DateTimeImmutable());
-                        $log->setJobName('Step_1: Import fichier client');
-                        $log->setMessage('Le fichier ' . $file->getClientFilename() . ' est introuvable');
-                        $log->setStatus(-1);
+                        $log->setMessage('Erreur de chargement du fichier '.$file->getClientFilename().'. Le fichier est absent.');
+                        $log->setStatus(0);
                         $entityManager->persist($log);
                         $entityManager->flush();
                         $entityManager->remove($file);
@@ -412,10 +945,8 @@ class ScalabelController extends AbstractController
                     // On vérifie que le fichier contient des enregistrements
                     if($filePresent){
                         if(sizeof($records) == 0){
-                            $log->setExecutedAt(new DateTimeImmutable());
-                            $log->setJobName('Step_1: Import fichier client');
-                            $log->setMessage('Le fichier ' . $file->getClientFilename() . ' est vide');
-                            $log->setStatus(-1);
+                            $log->setMessage('Erreur de chargement du fichier '.$file->getClientFilename(). '. Le fichier est vide.' );
+                            $log->setStatus(0);
                             $entityManager->persist($log);
                             $entityManager->flush();
                             $entityManager->remove($file);
@@ -428,10 +959,8 @@ class ScalabelController extends AbstractController
 
                     if($filePresent && $fileContientEnregistrements){
                         // On commence le chargement du fichier
-                        $log->setExecutedAt(new DateTimeImmutable());
-                        $log->setJobName('Step_1: Import fichier client');
-                        $log->setMessage('Début de l import de ' . $file->getClientFilename() . '...');
-                        $log->setStatus(1);
+                        $log->setMessage('Début import de ' . $file->getClientFilename() . '...');
+                        $log->setStatus(2);
                         $entityManager->persist($log);
                         $entityManager->flush();
 
@@ -439,6 +968,20 @@ class ScalabelController extends AbstractController
                         $sku_index = 1;
                         $countUploadSuccess = 0;
                         $countUploadErrors = 0;
+
+                        /*
+                        
+                        On en est là. Tu prend le total de row que tu divises par 10.
+                        Ensuite tu compares le n° de la ligne à ce Num (que tu additionnes pour le prochain step)
+                        Tu en déduit l'avancement par rapport au total tous les 10%
+                        
+                        
+                        */
+
+
+
+
+
                         foreach($records as $row){
                             if($sku_index >= $ligne){
                                 $column_index = 0;
@@ -459,15 +1002,8 @@ class ScalabelController extends AbstractController
                                                         $nbcolonneErrors++;
                                                     }
                                                     break;
-                                                case 'data1':
-                                                    $sku->setData1($row[$column_index]);
-                                                    break;
-                                                case 'data2':
-                                                    $sku->setData2($row[$column_index]);
-                                                    break;
-                                                case 'data3':
-                                                    $sku->setData3($row[$column_index]);
-                                                    break;
+                                                default:
+                                                    $sku->setDataColumn($paramcol->getSklblStructure()->getName(),$row[$column_index]);
                                             
                                             }
                                         }
@@ -495,24 +1031,24 @@ class ScalabelController extends AbstractController
                             $sku_index++;
                         }
                         if($countUploadErrors == 0){
-                            $log = new SklblLogs();
+                           /* $log = new SklblLogs();
                             $log->setExecutedAt(new DateTimeImmutable());
                             $log->setJobName('Step_1: Import fichier client');
                             $log->setMessage('L import de ' . $file->getClientFilename() . ' a été réalisé avec succès');
                             $log->setStatus(1);
                             $entityManager->persist($log);
-                            $entityManager->flush();
+                            $entityManager->flush();*/
 
                             rename($path, $this->getParameter('sklbl_fichier_client_success').'/'.$file->getClientFilename());
                             $file->setStatus(1);
                             $entityManager->persist($file);
                             $entityManager->flush();
                         }else{
-                            $log = new SklblLogs();
+                          /*  $log = new SklblLogs();
                             $log->setExecutedAt(new DateTimeImmutable());
                             $log->setJobName('Step_1: Import fichier client');
                             $log->setMessage('Il y a ' . $countUploadErrors . ' erreur(s) dans l import de  ' . $file->getClientFilename());
-                            $log->setStatus(-1);
+                            $log->setStatus(-1);*/
                             
 
                             rename($path, $this->getParameter('sklbl_fichier_client_error').'/'.$file->getClientFilename());
@@ -529,11 +1065,11 @@ class ScalabelController extends AbstractController
             $filesEnErreur = $sklblFilesRepository->countStep1FilesError($order);
             if($filesEnErreur > 0){
 
-                $log = new SklblLogs();
+                /*$log = new SklblLogs();
                 $log->setExecutedAt(new DateTimeImmutable());
                 $log->setJobName('Step_1: Import fichier client');
                 $log->setMessage('Step_1: Erreur d import pour la commande '. $order->getOrderNum());
-                $log->setStatus(-1);
+                $log->setStatus(-1);*/
 
                 $order->setSklblStatus(-1);
                 $entityManager->persist($order);
@@ -541,15 +1077,17 @@ class ScalabelController extends AbstractController
             }else{
                 $filesSuccess = $sklblFilesRepository->countStep1FilesSuccess($order);
                 if($filesSuccess > 0){
-                    $log = new SklblLogs();
+                    /*$log = new SklblLogs();
                     $log->setExecutedAt(new DateTimeImmutable());
                     $log->setJobName('Step_1: Import fichier client');
                     $log->setMessage('Step_1: Succès import pour la commande '. $order->getOrderNum());
-                    $log->setStatus(1);
-
-                    $order->setSklblStatus(2);
-                    $entityManager->persist($order);
-                    $entityManager->flush();
+                    $log->setStatus(1);*/
+                    if($order->getSklblStatus() < 2){
+                        $order->setSklblStatus(2);
+                        $entityManager->persist($order);
+                        $entityManager->flush();
+                    }
+                    
                 }
                 
             }
@@ -636,7 +1174,10 @@ class ScalabelController extends AbstractController
             }
             $sklblOrder->setQteLimit($qteLimit);
             $sklblOrder->setPercentAboveLimit($percentAboveLimit);
-            $sklblOrder->setSklblStatus(3);
+            
+            if($sklblOrder->getSklblStatus() < 3){
+                $sklblOrder->setSklblStatus(3);
+            }
             $entityManager->persist($sklblOrder);
             $entityManager->flush($sklblOrder);
             return $this->redirectToRoute('sklbl_step_2', [
@@ -765,17 +1306,19 @@ class ScalabelController extends AbstractController
             $sklblFile->setSklblOf($sklblOf);
             $entityManager->persist($sklblFile);
         }
-
-        $sklblOrder->setSklblStatus(4);
-        $entityManager->persist($sklblOrder);
-        $entityManager->flush();
+        if($sklblOrder->getSklblStatus() < 4){
+            $sklblOrder->setSklblStatus(4);
+            $entityManager->persist($sklblOrder);
+            $entityManager->flush();
+        }
+        
         return $this->redirectToRoute('sklbl_step_4', [
             'order_id' => $order_id
         ]);
     }
 
 
-     /**************************************Etape4: On rappatrie le F1 **********************************************
+     /**************************************Etape4: On Génère le F1 **********************************************
      *                                                                                                              *
      *                                                                                                              *
      ****************************************************************************************************************/
@@ -848,9 +1391,12 @@ class ScalabelController extends AbstractController
             $entityManager->persist($file);
             $entityManager->flush();
         }
-        $sklblOrder->setSklblStatus(5);
-        $entityManager->persist($sklblOrder);
-        $entityManager->flush();
+        if($sklblOrder->getSklblStatus() < 5){
+            $sklblOrder->setSklblStatus(5);
+            $entityManager->persist($sklblOrder);
+            $entityManager->flush();
+        }
+
 
         return $this->redirectToRoute('sklbl_step_4', [
             'order_id' => $sklblOrder->getId()
@@ -862,6 +1408,7 @@ class ScalabelController extends AbstractController
     SklblFilesRepository $sklblFilesRepository,
     SklblOrdersRepository $sklblOrdersRepository,
     SklblSkuRepository $sklblSkuRepository,
+    SklblUploadConfigRepository $sklblUploadConfigRepository,
     EntityManagerInterface $entityManager,
     Request $request): JsonResponse
     {
@@ -873,6 +1420,7 @@ class ScalabelController extends AbstractController
 
             // Pour chaque commande on vérifier si des demandes de génération des enregistrements ont été enregistrées
             $files = $sklblFilesRepository->getStep4FileAGenererList($order);
+            $columnList = $sklblUploadConfigRepository->findFx1VariablesToGenerate($order);
             $countStep4FileAGenerer = sizeof($files); 
             if($countStep4FileAGenerer > 0){
                 foreach($files as $file){
@@ -887,9 +1435,10 @@ class ScalabelController extends AbstractController
                             $fx->setSklblOf($of);
                             $fx->setSklblFile($file);
                             $fx->setSklblSku($sku);
-                            $fx->setData1($sku->getData1());
-                            $fx->setData2($sku->getData2());
-                            $fx->setData3($sku->getData3());
+
+                            foreach($columnList as $paramcol){
+                                $fx->setDataColumn($paramcol->getSklblStructure()->getName(),$sku->getDataColumn($paramcol->getSklblStructure()->getName()));
+                            }
                             $fx->setStatus(1);
                             $currentDate = new DateTimeImmutable();
                             $fx->setUpdatedAt($currentDate);
@@ -947,7 +1496,522 @@ class ScalabelController extends AbstractController
 
 
 
+      /**************************************Etape42: On génère le CSV de F1 ****************************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
 
+     #[Route('/api/step_42', name: 'api_step_42', methods:['post'] )]
+     public function api_step_42(ManagerRegistry $doctrine,
+     SklblFilesRepository $sklblFilesRepository,
+     SklblOrdersRepository $sklblOrdersRepository,
+     SklblFxRepository $sklblFxRepository,
+     SklblUploadConfigRepository $sklblUploadConfigRepository,
+     EntityManagerInterface $entityManager,
+     Request $request): JsonResponse
+     {
+         $orders = $sklblOrdersRepository->getCurrentOrders();
+         $log = new SklblLogs();
+         $excel = new SklblExcelService();
+         foreach($orders as $order){
+             // Pour chaque commande on vérifier si des demandes de génération des enregistrements ont été enregistrées
+             $files = $sklblFilesRepository->getStep42FilesList($order);
+             $columnList = $sklblUploadConfigRepository->findF1Variables($order);
+             $countStep42FilesAGenerer = sizeof($files); 
+             $errorFiles = 0;
+             if($countStep42FilesAGenerer > 0){
+                 foreach($files as $file){
+                    $fxs = $sklblFxRepository->findStep42ATransferer($file,$columnList);
+                     if(sizeof($fxs) > 0){
+                        
+                         $filename = $excel->createNewF1($file,$columnList,$this->getParameter('sklbl_f1_directory'));
+                         $excel->integrateDataInF1($fxs);
+                         $excel->saveF1();
+                         if($excel->getLastLine() - 1 != sizeof($fxs)){
+                             $errorFiles ++;
+                         }else{
+                             $file->setStatus(5);
+                             $entityManager->persist($file);
+                             $entityManager->flush();
+                         }
+ 
+                     }
+ 
+                 }
+ 
+                 if($errorFiles == 0){
+                     foreach($files as $file){
+                         $skus = $file->getSklblSkus();
+                         foreach($skus as $sku){
+                             if($sklblFxRepository->updateFxStatut($sku,4)){
+                                 $sku->setStatus(4);
+                                 $entityManager->persist($sku);
+                                 $entityManager->flush();
+                             }
+                         }
+                     }
+                 }
+ 
+                 // On vérifie que le traitement a été effectué jusqu'au bout
+                 if($errorFiles == 0){
+                     foreach($files as $file){
+                         $excel = new SklblExcelService();
+                         $nbFxs = $sklblFxRepository->countFxLoaded($file);
+                         $filename = $excel->openF1($file,$this->getParameter('sklbl_f1_directory'));
+                         $nbRecords = $excel->getLastLine();
+                         if($nbFxs == $nbRecords - 1){
+                             echo "Succès du chargement";
+                             rename($this->getParameter('sklbl_f1_directory').'/'.$filename, $this->getParameter('sklbl_f1_a_transferer_directory').'/'.$filename);
+                             $file->setStatus(6);
+                             $entityManager->persist($file);
+                             $entityManager->flush();
+                             if( $order->getSklblStatus() < 8){
+                                $order->setSklblStatus(8);
+                                $entityManager->persist($order);
+                                $entityManager->flush();
+                            }
+                             
+                         }else{
+                             echo "Echec du chargement";
+                         }
+                     }
+                 }
+                 
+ 
+             }
+ 
+         }
+ 
+         return $this->json('Traitement terminé');
+ 
+     }
+
+
+      /**************************************Etape43: On demande le transfert Azure **********************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
+
+     #[Route('/ask_transfert/{of_id}', name: 'ask_transfert')]
+     public function ask_transfert(
+         SklblOfRepository $sklblOfRepository,
+         SklblSkuRepository $sklblSkuRepository,
+         SklblFilesRepository $sklblFilesRepository,
+         EntityManagerInterface $entityManager,
+         MessageBusInterface $bus,
+         int $of_id): Response
+     {
+         $sklblOf = $sklblOfRepository->find($of_id);
+         $sklblOrder = $sklblOf->getSklblOrder();
+         $sklblFiles = $sklblFilesRepository->getStep4FilesATransferer($sklblOrder);
+         foreach($sklblFiles as $file){
+             $file->setStatus(4);
+             $entityManager->persist($file);
+             $entityManager->flush();
+         }
+        if( $sklblOrder->getSklblStatus() < 7){
+            $sklblOrder->setSklblStatus(7);
+            $entityManager->persist($sklblOrder);
+            $entityManager->flush();
+        }
+        
+ 
+         return $this->redirectToRoute('sklbl_step_4', [
+             'order_id' => $sklblOrder->getId()
+         ]);
+         
+     }
+
+     #[Route('/api/step_43', name: 'api_step_43', methods:['post'] )]
+    public function api_step_43(ManagerRegistry $doctrine,
+    SklblFilesRepository $sklblFilesRepository,
+    SklblOrdersRepository $sklblOrdersRepository,
+    SklblOfRepository $sklblOfRepository,
+    SklblSkuRepository $sklblSkuRepository,
+    SklblFxRepository $sklblFxRepository,
+    EntityManagerInterface $entityManager,
+    Request $request): JsonResponse
+    {
+        $orders = $sklblOrdersRepository->getCurrentOrders();
+        $log = new SklblLogs();
+        $excel = new SklblExcelService();
+        
+        foreach($orders as $order){
+            // Pour chaque commande on vérifier si des demandes de génération des enregistrements ont été enregistrées
+            $files = $sklblFilesRepository->getStep43FilesList($order);
+            $countStep43FilesAEnvoyer = sizeof($files); 
+            $errorFiles = 0;
+            if($countStep43FilesAEnvoyer > 0){
+                foreach($files as $file){
+                    // Appel API Azure et confirmation transmission
+                    $fichierTransfere = true;
+                    if($fichierTransfere){
+                        $sklblSkuRepository->updateSkuFileStatut($file,5);
+                        $sklblFxRepository->updateFxFileStatut($file,5);
+                        $sklblFxRepository->updateFxFileSentOn($file,new DateTimeImmutable());
+                        $filename = $excel->openF1($file,$this->getParameter('sklbl_f1_a_transferer_directory'));
+                        rename($this->getParameter('sklbl_f1_a_transferer_directory').'/'.$filename, $this->getParameter('sklbl_f1_transfere_directory').'/'.$filename);
+                        $file->setStatus(7);
+                        $entityManager->persist($file);
+                        $entityManager->flush();
+
+                        if( $order->getSklblStatus() < 9){
+                            $order->setSklblStatus(9);
+                            $entityManager->persist($order);
+                            $entityManager->flush();
+                        }
+
+                        
+
+                    }
+
+                }
+            }
+        }
+        return $this->json('Envoi terminé');
+    }
+
+
+
+      /**************************************Etape44: Attente reception Azure et intégration ************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
+
+    #[Route('/api/step_44', name: 'api_step_44', methods:['post'] )]
+    public function api_step_44(ManagerRegistry $doctrine,
+    SklblFilesRepository $sklblFilesRepository,
+    SklblOrdersRepository $sklblOrdersRepository,
+    SklblOfRepository $sklblOfRepository,
+    SklblSkuRepository $sklblSkuRepository,
+    SklblFxRepository $sklblFxRepository,
+    SklblFx2Repository $sklblFx2Repository,
+    SklblStructureRepository $sklblStructureRepository,
+    SklblUploadConfigRepository $sklblUploadConfigRepository,
+    EntityManagerInterface $entityManager,
+    Request $request): JsonResponse
+    {
+
+        ini_set('max_execution_time', '3600');
+
+        // Etape 1: Recherche de fichiers F2 Reçu et copie dans le répertoire en traitement
+        $nb_fichiers_recus = 0; 
+        $nb_fichiers_en_traitement = 0; 
+
+        $dirRecu = $this->getParameter('sklbl_f2_directory').'/';
+        $dirEnTraitement = $this->getParameter('sklbl_f2_en_traitement_directory').'/';
+        $dirTraite = $this->getParameter('sklbl_f2_traite_directory').'/';
+        $dirArchive = $this->getParameter('sklbl_f2_archive_directory').'/';
+
+        if ($handle = opendir($dirRecu)) {
+            while (($fileRecu = readdir($handle)) !== false){
+                if (!in_array($fileRecu, array('.', '..')) && !is_dir($dirRecu.$fileRecu)) 
+                {
+                $nb_fichiers_recus++;
+                if (copy($dirRecu.$fileRecu, $dirArchive.$fileRecu)) {
+                        echo "Archivage du fichier $fileRecu...\n";
+                        if(rename($dirRecu.$fileRecu, $dirEnTraitement.$fileRecu)) {
+                            echo "Déplacement du fichier $fileRecu de recu à En_traitement...\n";
+                        }
+                    }
+                }
+            }
+        }
+
+        // Etape 2: Recherche de fichiers F2 a traiter
+        if ($handle = opendir($dirEnTraitement)) {
+            while (($fileEnTraitement = readdir($handle)) !== false){
+                if (!in_array($fileEnTraitement, array('.', '..')) && !is_dir($dirEnTraitement.$fileEnTraitement)) 
+                $nb_fichiers_en_traitement++;
+            }
+        }
+
+
+        if($nb_fichiers_en_traitement > 0){
+            if ($handle = opendir($dirEnTraitement)) {
+                while (($file = readdir($handle)) !== false){
+                    if (!in_array($file, array('.', '..')) && !is_dir($dirEnTraitement.$file)){
+                        $checkOf = false; 
+                        $checkOrder = false; 
+                        $checkFx2Records = false;
+                        $checkFxAssociated = false;
+                        $checkFx2Associated = false;
+                        $checkFxFx2Associated = false;
+                        
+                        $excelService = new SklblExcelService();
+                        $records = $excelService->step44($dirEnTraitement.$file);
+                        $of = $sklblOfRepository->findOneByCode(substr($file,3,6));
+
+                        // On contrôle que le fichier est bien associé à un OF et à une commande
+                        if($of){
+                            $checkOf = true; 
+                            $order = $of->getSklblOrder();
+                            if($order){
+                                $checkOrder = true; 
+                                $order->setSklblStatus(10);
+                                $entityManager->persist($order);
+                                $entityManager->flush();
+
+                                $sklblFile = $sklblFilesRepository->findFx2File($of,$file);
+                                if(!$sklblFile){
+                                    $sklblFile = new SklblFiles();
+                                    $sklblFile->setClientFilename($file);
+                                    $sklblFile->setCategorie('fx2');
+                                    $sklblFile->setSklblOf($of);
+                                    $sklblFile->setSklblOrder($order);
+                                    $sklblFile->setStatus(1);
+                                    $sklblFile->setLigne(0);
+                                    $entityManager->persist($sklblFile);
+                                    $entityManager->flush();
+                                }
+
+                            }
+                        }
+                        // Etape de réception des enregistrements de F2 dans la base de données
+                        if($checkOf && $checkOrder){
+                            
+                            $keyAssoc = $sklblUploadConfigRepository->findAssoc($order);
+                            $structure = $sklblStructureRepository->findOneByName('unique_id');
+                            $uniqIdCol = $sklblUploadConfigRepository->findUniqIdF2($order,$structure);
+                            $colsToLoad = $sklblUploadConfigRepository->findF2Variables($order);
+                            if($uniqIdCol){
+                                foreach($records as $row){
+                                    // On récupère la colonne idantifiante de l'étiquette
+                                    $fx2 = $sklblFx2Repository->find($row[$uniqIdCol->getF2CsvNum() - 1]);
+                                    if(!$fx2){
+                                        $fx2 = new SklblFx2();
+                                        $fx2->setId($row[$uniqIdCol->getF2CsvNum() - 1]);
+                                        $fx2->setUniqueId($row[$uniqIdCol->getF2CsvNum() - 1]);
+                                        $fx2->setSklblOf($of);
+                                        $fx2->setCreatedAt(new DateTimeImmutable());
+                                        $fx2->setGenScalabelOn(new DateTimeImmutable());
+                                        $fx2->setSklblFilename($file);
+                                        $fx2->setSklblFile($sklblFile);
+                                        $fx2->setStatus(5);
+                                        foreach($colsToLoad as $col){
+                                            $fx2->setDataColumn($col->getSklblStructure()->getName(),$row[$col->getF2CsvNum() - 1]);
+                                        }
+
+                                        $entityManager->persist($fx2);
+                                        $entityManager->flush();
+    
+    
+                                        /*$fxtab = $sklblFxRepository->findFreeFx($fx2,$keyAssoc);
+                                        if(sizeof($fxtab) == 1){
+                                            $fx = $sklblFxRepository->find($fxtab[0]['id']);
+                                            if($fx){
+                                                $fx->setUniqueId($row[$uniqIdCol->getF2CsvNum() - 1]);
+                                                $fx->setReceivedOn(new DateTimeImmutable());
+                                                foreach($colsToLoad as $col){
+                                                    $fx->setDataColumn($col->getSklblStructure()->getName(),$row[$col->getF2CsvNum() - 1]);
+                                                }
+                                                $fx->setStatus(6);
+                                                $entityManager->persist($fx);
+                                                $fx2->setStatus(6);
+                                                $fx2->setSklblCustfile($fx->getSklblFile());
+                                                $fx2->setSklblFx($fx);
+                                                $fx2->setDealsOn(new DateTimeImmutable());
+                                                $entityManager->persist($fx2);
+                                                $entityManager->flush();
+                                            }
+                                        }*/
+                                        
+                                        
+                                    }/*else{
+                                        $fxtab = $sklblFxRepository->findFreeFx($fx2,$keyAssoc);
+                                        if(sizeof($fxtab) == 1){
+                                            $fx = $sklblFxRepository->find($fxtab[0]['id']);
+                                            if($fx){
+                                                $fx->setUniqueId($row[$uniqIdCol->getF2CsvNum() - 1]);
+                                                $fx->setReceivedOn(new DateTimeImmutable());
+                                                foreach($colsToLoad as $col){
+                                                    $fx->setDataColumn($col->getSklblStructure()->getName(),$row[$col->getF2CsvNum() - 1]);
+                                                }
+                                                $fx->setStatus(6);
+                                                $entityManager->persist($fx);
+                                                $fx2->setStatus(6);
+                                                $fx2->setSklblCustfile($fx->getSklblFile());
+                                                $fx2->setSklblFx($fx);
+                                                $fx2->setDealsOn(new DateTimeImmutable());
+                                                $entityManager->persist($fx2);
+                                                $entityManager->flush();
+                                            }
+                                        }
+                                    }*/
+
+                                }
+                                
+                            }
+
+                        }
+
+                        // On compare nbRecords du fichier FX2 avec bdd. Si le nombre d'enregistrement est identique on est ok
+                        if($excelService->getLastLine() && $sklblFx2Repository->countFx2Loaded($file)){
+                            $checkFx2Records = true;
+                            echo "Success: fx2 nb enregistrements identiques\b";
+                        }else{
+                            echo "Error: fx2 nb enregistrements différents\b";
+                        }
+
+
+                        // On rapproche chaque enregistrement F2 avec F1
+
+
+
+
+
+                        
+
+                       /* // On vérifie ensuite que chaque enregistrement de FX2 a été associé
+                        if($sklblFx2Repository->countFx2NotAssociated($of) == 0){
+                            $checkFx2Associated = true;
+                            echo "Success: Tous les fx2 sont associés\b";
+                        }else{
+                            echo "Error: Certains fx2 ne sont pas associés\b";
+                        }
+
+                        // On vérifie ensuite que chaque enregistrement de FX a été associé
+                        if($sklblFxRepository->countFxNotAssociated($of) == 0){
+                            $checkFxAssociated = true;
+                            echo "Success: Tous les fx2 sont associés\b";
+                        }else{
+                            echo "Error: Certains fx2 ne sont pas associés\b";
+                        }
+
+                        // On vérifie enfin que le nombre d'fx2 et le nombre d'FX est identique
+                        if($sklblFxRepository->countFxAssociated($of) == $sklblFx2Repository->countFx2Associated($of)){
+                            $checkFxFx2Associated = true;
+                            echo "Success: Tous les fx2 et fx sont associés\b";
+                        }else{
+                            echo "Error: Certains fx2 et fx ne sont pas associés\b";
+                        }*/
+
+                        if($checkFx2Records){
+                            $sklblFile->setStatus(3);
+                            $entityManager->persist($sklblFile);
+                            $entityManager->flush();
+                            if($fileRecu){
+                                rename($dirEnTraitement.$fileRecu, $dirTraite.$fileRecu);
+                            }
+                            if( $order->getSklblStatus() < 11){
+                                $order->setSklblStatus(11);
+                                $entityManager->persist($order);
+                                $entityManager->flush();
+                            }
+
+                        }
+
+                    }
+                }
+
+            }
+            return $this->json('F2: enregistrements traités');
+        }else{
+            return $this->json('F2: Aucun fichier reçu');
+        }
+
+    }
+
+
+     /**************************************Etape45: Rapprochement de F1 et F2 *************************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
+
+     #[Route('/api/step_45', name: 'api_step_45', methods:['post'] )]
+     public function api_step_45(ManagerRegistry $doctrine,
+     SklblFilesRepository $sklblFilesRepository,
+     SklblOrdersRepository $sklblOrdersRepository,
+     SklblOfRepository $sklblOfRepository,
+     SklblSkuRepository $sklblSkuRepository,
+     SklblFxRepository $sklblFxRepository,
+     SklblFx2Repository $sklblFx2Repository,
+     SklblStructureRepository $sklblStructureRepository,
+     SklblUploadConfigRepository $sklblUploadConfigRepository,
+     EntityManagerInterface $entityManager,
+     Request $request): JsonResponse
+     {
+ 
+        ini_set('max_execution_time', '3600');
+
+        // Etape 1: On recherche les fichiers F2 réceptionnés
+        $f2Files = $sklblFilesRepository->getF2FilesReceived();
+        foreach($f2Files as $f2File){
+            // Etape2: On identifie la commande et la clé d'association de la configuration
+            $order = $f2File->getSklblOrder();
+            $keyAssoc = $sklblUploadConfigRepository->findAssoc($order);
+            $colsToLoad = $sklblUploadConfigRepository->findF2SupVariables($order);
+
+            // Etape3: On met à jour le status de la commande et du fichier F2 comme étant en cour de rapprochement
+            $order->setSklblStatus(12);
+            $f2File->setStatus(4);
+            $entityManager->persist($order);
+            $entityManager->persist($f2File);
+            $entityManager->flush();
+
+            // Etape4: On récupère les enregistrements fx2 non rapprochés du fichier
+            $fx2s = $sklblFx2Repository->findFx2sNotAssociated($f2File);
+            foreach($fx2s as $fx2){
+                $fxtab = $sklblFxRepository->findFreeFx($fx2,$keyAssoc);
+                if(sizeof($fxtab) == 1){
+                    $fx = $sklblFxRepository->find($fxtab[0]['id']);
+                    // Etape5: On rapproche fx2 et fx
+                    if($fx){
+                        $fx->setUniqueId($fx2->getUniqueId());
+                        $fx->setReceivedOn(new DateTimeImmutable());
+                        foreach($colsToLoad as $col){
+                            $fx->setDataColumn($col->getSklblStructure()->getName(),$fx2->getDataColumn($col->getSklblStructure()->getName()));
+                        }
+                        $fx->setStatus(6);
+                        $entityManager->persist($fx);
+                        $fx2->setStatus(6);
+                        $fx2->setSklblCustfile($fx->getSklblFile());
+                        $fx2->setSklblFx($fx);
+                        $fx2->setDealsOn(new DateTimeImmutable());
+                        $entityManager->persist($fx2);
+                        $entityManager->flush();
+                    }
+                }
+            }
+            /* // On vérifie ensuite que chaque enregistrement de FX2 a été associé
+            if($sklblFx2Repository->countFx2NotAssociated($of) == 0){
+                $checkFx2Associated = true;
+                echo "Success: Tous les fx2 sont associés\b";
+            }else{
+                echo "Error: Certains fx2 ne sont pas associés\b";
+            }
+
+            // On vérifie ensuite que chaque enregistrement de FX a été associé
+            if($sklblFxRepository->countFxNotAssociated($of) == 0){
+                $checkFxAssociated = true;
+                echo "Success: Tous les fx2 sont associés\b";
+            }else{
+                echo "Error: Certains fx2 ne sont pas associés\b";
+            }
+
+            // On vérifie enfin que le nombre d'fx2 et le nombre d'FX est identique
+            if($sklblFxRepository->countFxAssociated($of) == $sklblFx2Repository->countFx2Associated($of)){
+                $checkFxFx2Associated = true;
+                echo "Success: Tous les fx2 et fx sont associés\b";
+            }else{
+                echo "Error: Certains fx2 et fx ne sont pas associés\b";
+            }
+            if($checkFx2Records){
+                $sklblFile->setStatus(3);
+                $entityManager->persist($sklblFile);
+                $entityManager->flush();
+                if($fileRecu){
+                    rename($dirEnTraitement.$fileRecu, $dirTraite.$fileRecu);
+                }
+
+                $order->setSklblStatus(11);
+                $entityManager->persist($order);
+                $entityManager->flush();
+            }*/
+        }
+        return $this->json('F2: enregistrements traités');
+ 
+     }
 
 
 
@@ -1064,33 +2128,7 @@ class ScalabelController extends AbstractController
     
 
 
-    #[Route('/ask_transfert/{of_id}', name: 'ask_transfert')]
-    public function ask_transfert(
-        SklblOfRepository $sklblOfRepository,
-        SklblSkuRepository $sklblSkuRepository,
-        SklblFilesRepository $sklblFilesRepository,
-        EntityManagerInterface $entityManager,
-        MessageBusInterface $bus,
-        int $of_id): Response
-    {
-        $sklblOf = $sklblOfRepository->find($of_id);
-        $sklblOrder = $sklblOf->getSklblOrder();
-        $sklblFiles = $sklblFilesRepository->getStep4FilesATransferer($sklblOrder);
-        foreach($sklblFiles as $file){
-            $file->setStatus(4);
-            $entityManager->persist($file);
-            $entityManager->flush();
-        }
-
-        $sklblOrder->setSklblStatus(7);
-        $entityManager->persist($sklblOrder);
-        $entityManager->flush();
-
-        return $this->redirectToRoute('sklbl_step_4', [
-            'order_id' => $sklblOrder->getId()
-        ]);
-        
-    }
+    
 
     #[Route('/conf_reception/{of_id}', name: 'conf_reception')]
     public function conf_reception(
@@ -1110,9 +2148,12 @@ class ScalabelController extends AbstractController
             $entityManager->flush();
         }
 
-        $sklblOrder->setSklblStatus(12);
-        $entityManager->persist($sklblOrder);
-        $entityManager->flush();
+        
+        if( $sklblOrder->getSklblStatus() < 12){
+            $sklblOrder->setSklblStatus(12);
+            $entityManager->persist($sklblOrder);
+            $entityManager->flush();
+        }
 
         return $this->redirectToRoute('sklbl_step_5', [
             'order_id' => $sklblOrder->getId()
@@ -1120,324 +2161,12 @@ class ScalabelController extends AbstractController
         
     }
 
-    #[Route('/api/step_42', name: 'api_step_42', methods:['post'] )]
-    public function api_step_42(ManagerRegistry $doctrine,
-    SklblFilesRepository $sklblFilesRepository,
-    SklblOrdersRepository $sklblOrdersRepository,
-    SklblFxRepository $sklblFxRepository,
-    SklblUploadConfigRepository $sklblUploadConfigRepository,
-    EntityManagerInterface $entityManager,
-    Request $request): JsonResponse
-    {
-        $orders = $sklblOrdersRepository->getCurrentOrders();
-        $log = new SklblLogs();
-        $excel = new SklblExcelService();
-        foreach($orders as $order){
-            // Pour chaque commande on vérifier si des demandes de génération des enregistrements ont été enregistrées
-            $files = $sklblFilesRepository->getStep42FilesList($order);
-            $columnList = $sklblUploadConfigRepository->findBySklblOrderActive($order);
-            $countStep42FilesAGenerer = sizeof($files); 
-            $errorFiles = 0;
-            if($countStep42FilesAGenerer > 0){
-                foreach($files as $file){
-                    $fxs = $sklblFxRepository->findStep42ATransferer($file);
-                    if(sizeof($fxs) > 0){
-                        $filename = $excel->createNewF1($file,$columnList,$this->getParameter('sklbl_f1_directory'));
-                        $excel->integrateDataInF1($fxs);
-                        $excel->saveF1();
-                        if($excel->getLastLine() - 1 != sizeof($fxs)){
-                            $errorFiles ++;
-                        }else{
-                            $file->setStatus(5);
-                            $entityManager->persist($file);
-                            $entityManager->flush();
-                        }
-
-                    }
-
-                }
-
-                if($errorFiles == 0){
-                    foreach($files as $file){
-                        $skus = $file->getSklblSkus();
-                        foreach($skus as $sku){
-                            if($sklblFxRepository->updateFxStatut($sku,4)){
-                                $sku->setStatus(4);
-                                $entityManager->persist($sku);
-                                $entityManager->flush();
-                            }
-                        }
-                    }
-                }
-
-                // On vérifie que le traitement a été effectué jusqu'au bout
-                if($errorFiles == 0){
-                    foreach($files as $file){
-                        $excel = new SklblExcelService();
-                        $nbFxs = $sklblFxRepository->countFxLoaded($file);
-                        $filename = $excel->openF1($file,$this->getParameter('sklbl_f1_directory'));
-                        $nbRecords = $excel->getLastLine();
-                        if($nbFxs == $nbRecords - 1){
-                            echo "Succès du chargement";
-                            rename($this->getParameter('sklbl_f1_directory').'/'.$filename, $this->getParameter('sklbl_f1_a_transferer_directory').'/'.$filename);
-                            $file->setStatus(6);
-                            $entityManager->persist($file);
-                            $entityManager->flush();
-
-                            $order->setSklblStatus(8);
-                            $entityManager->persist($order);
-                            $entityManager->flush();
-                        }else{
-                            echo "Echec du chargement";
-                        }
-                    }
-                }
-                
-
-            }
-
-        }
-
-        return $this->json('Traitement terminé');
-
-    }
+    
 
 
-    #[Route('/api/step_43', name: 'api_step_43', methods:['post'] )]
-    public function api_step_43(ManagerRegistry $doctrine,
-    SklblFilesRepository $sklblFilesRepository,
-    SklblOrdersRepository $sklblOrdersRepository,
-    SklblOfRepository $sklblOfRepository,
-    SklblSkuRepository $sklblSkuRepository,
-    SklblFxRepository $sklblFxRepository,
-    EntityManagerInterface $entityManager,
-    Request $request): JsonResponse
-    {
-        $orders = $sklblOrdersRepository->getCurrentOrders();
-        $log = new SklblLogs();
-        $excel = new SklblExcelService();
-        
-        foreach($orders as $order){
-            // Pour chaque commande on vérifier si des demandes de génération des enregistrements ont été enregistrées
-            $files = $sklblFilesRepository->getStep43FilesList($order);
-            $countStep43FilesAEnvoyer = sizeof($files); 
-            $errorFiles = 0;
-            if($countStep43FilesAEnvoyer > 0){
-                foreach($files as $file){
-                    // Appel API Azure et confirmation transmission
-                    $fichierTransfere = true;
-                    if($fichierTransfere){
-                        $sklblSkuRepository->updateSkuFileStatut($file,5);
-                        $sklblFxRepository->updateFxFileStatut($file,5);
-                        $sklblFxRepository->updateFxFileSentOn($file,new DateTimeImmutable());
-                        $filename = $excel->openF1($file,$this->getParameter('sklbl_f1_a_transferer_directory'));
-                        rename($this->getParameter('sklbl_f1_a_transferer_directory').'/'.$filename, $this->getParameter('sklbl_f1_transfere_directory').'/'.$filename);
-                        $file->setStatus(7);
-                        $entityManager->persist($file);
-                        $entityManager->flush();
+    
 
-                        $order->setSklblStatus(9);
-                        $entityManager->persist($order);
-                        $entityManager->flush();
-
-                    }
-
-                }
-            }
-        }
-        return $this->json('Envoi terminé');
-    }
-
-    #[Route('/api/step_44', name: 'api_step_44', methods:['post'] )]
-    public function api_step_44(ManagerRegistry $doctrine,
-    SklblFilesRepository $sklblFilesRepository,
-    SklblOrdersRepository $sklblOrdersRepository,
-    SklblOfRepository $sklblOfRepository,
-    SklblSkuRepository $sklblSkuRepository,
-    SklblFxRepository $sklblFxRepository,
-    SklblFx2Repository $sklblFx2Repository,
-    EntityManagerInterface $entityManager,
-    Request $request): JsonResponse
-    {
-        ini_set('max_execution_time', '3600');
-     
-        // Etape 1: Recherche de fichiers F2 Reçu et copie dans le répertoire en traitement
-        $nb_fichiers_recus = 0; 
-        $nb_fichiers_en_traitement = 0; 
-
-        $dirRecu = $this->getParameter('sklbl_f2_directory').'/';
-        $dirEnTraitement = $this->getParameter('sklbl_f2_en_traitement_directory').'/';
-        $dirTraite = $this->getParameter('sklbl_f2_traite_directory').'/';
-        $dirArchive = $this->getParameter('sklbl_f2_archive_directory').'/';
-
-        if ($handle = opendir($dirRecu)) {
-            while (($fileRecu = readdir($handle)) !== false){
-                if (!in_array($fileRecu, array('.', '..')) && !is_dir($dirRecu.$fileRecu)) 
-                {
-                $nb_fichiers_recus++;
-                if (copy($dirRecu.$fileRecu, $dirArchive.$fileRecu)) {
-                        echo "Archivage du fichier $fileRecu...\n";
-                        if(rename($dirRecu.$fileRecu, $dirEnTraitement.$fileRecu)) {
-                            echo "Déplacement du fichier $fileRecu de recu à En_traitement...\n";
-                        }
-                    }
-                }
-            }
-        }
-        // Etape 2: Recherche de fichiers F2 a traiter
-        if ($handle = opendir($dirEnTraitement)) {
-            while (($fileEnTraitement = readdir($handle)) !== false){
-                if (!in_array($fileEnTraitement, array('.', '..')) && !is_dir($dirEnTraitement.$fileEnTraitement)) 
-                $nb_fichiers_en_traitement++;
-            }
-        }
-
-
-
-        if($nb_fichiers_en_traitement > 0){
-            if ($handle = opendir($dirEnTraitement)) {
-                while (($file = readdir($handle)) !== false){
-                    if (!in_array($file, array('.', '..')) && !is_dir($dirEnTraitement.$file)){
-                        $checkFx2Records = false;
-                        $checkFxAssociated = false;
-                        $checkFx2Associated = false;
-                        $checkFxFx2Associated = false;
-                        
-                        $excelService = new SklblExcelService();
-                        $records = $excelService->step44($dirEnTraitement.$file);
-                        $of = $sklblOfRepository->findOneByCode($records[1][2]);
-                        $order = $of->getSklblOrder();
-
-                        if($order){
-                            $order->setSklblStatus(10);
-                            $entityManager->persist($order);
-                            $entityManager->flush();
-                        }
-                        
-                        $sklblFile = $sklblFilesRepository->findFx2File($of,$file);
-                        if(!$sklblFile){
-                            $sklblFile = new SklblFiles();
-                            $sklblFile->setClientFilename($file);
-                            $sklblFile->setCategorie('fx2');
-                            $sklblFile->setSklblOf($of);
-                            $sklblFile->setSklblOrder($order);
-                            $sklblFile->setStatus(1);
-                            $sklblFile->setLigne(0);
-                            $entityManager->persist($sklblFile);
-                            $entityManager->flush();
-                        }
-                        
-                        
-                        if($sklblFile){
-                            foreach($records as $row){
-                                $fx2 = $sklblFx2Repository->find($row[6]);
-                                if(!$fx2){
-                                    $fx2 = new SklblFx2();
-                                    $fx2->setId($row[6]);
-                                    $fx2->setUniqueId($row[6]);
-                                    $fx2->setSklblOf($of);
-                                    $fx2->setOfNum(intval($row[2]));
-                                    $fx2->setSku($row[7]);
-                                    $fx2->setSkuTisse($row[8]);
-                                    $fx2->setRedirectUrl($row[0]);
-                                    $fx2->setCreatedAt(new DateTimeImmutable());
-                                    $fx2->setGenScalabelOn(new DateTimeImmutable($row[3]));
-                                    $fx2->setSklblFilename($file);
-                                    $fx2->setSklblFile($sklblFile);
-                                    $fx2->setStatus(5);
-                                    $entityManager->persist($fx2);
-                                    $entityManager->flush();
-
-
-                                    $fx = $sklblFxRepository->findFreeFx($fx2);
-                                    if($fx){
-                                        $fx->setUniqueId($row[6]);
-                                        $fx->setRedirectUrl($row[0]);
-                                        $fx->setReceivedOn(new DateTimeImmutable());
-                                        $fx->setStatus(6);
-                                        $entityManager->persist($fx);
-                                        $fx2->setStatus(6);
-                                        $fx2->setSklblCustfile($fx->getSklblFile());
-                                        $fx2->setSklblFx($fx);
-                                        $fx2->setDealsOn(new DateTimeImmutable());
-                                        $entityManager->persist($fx2);
-                                        $entityManager->flush();
-                                    }
-                                    
-                                }else{
-                                    $fx = $sklblFxRepository->findFreeFx($fx2);
-                                    if($fx){
-                                        $fx->setUniqueId($row[6]);
-                                        $fx->setRedirectUrl($row[0]);
-                                        $fx->setReceivedOn(new DateTimeImmutable());
-                                        $fx->setStatus(6);
-                                        $entityManager->persist($fx);
-                                        $fx2->setStatus(6);
-                                        $fx2->setSklblCustfile($fx->getSklblFile());
-                                        $fx2->setSklblFx($fx);
-                                        $fx2->setDealsOn(new DateTimeImmutable());
-                                        $entityManager->persist($fx2);
-                                        $entityManager->flush();
-                                    }    
-                                }
-                                
-                            }
-                            // On compare nbRecords du fichier FX2 avec bdd
-                            if($excelService->getLastLine() && $sklblFx2Repository->countFx2Loaded($file)){
-                                $checkFx2Records = true;
-                                echo "Success: fx2 nb enregistrements identiques\b";
-                            }else{
-                                echo "Error: fx2 nb enregistrements différents\b";
-                            }
-
-                            // On vérifie ensuite que chaque enregistrement de FX2 a été associé
-                            if($sklblFx2Repository->countFx2NotAssociated($of) == 0){
-                                $checkFx2Associated = true;
-                                echo "Success: Tous les fx2 sont associés\b";
-                            }else{
-                                echo "Error: Certains fx2 ne sont pas associés\b";
-                            }
-
-                            // On vérifie ensuite que chaque enregistrement de FX a été associé
-                            if($sklblFxRepository->countFxNotAssociated($of) == 0){
-                                $checkFxAssociated = true;
-                                echo "Success: Tous les fx2 sont associés\b";
-                            }else{
-                                echo "Error: Certains fx2 ne sont pas associés\b";
-                            }
-
-                            // On vérifie enfin que le nombre d'fx2 et le nombre d'FX est identique
-                            if($sklblFxRepository->countFxAssociated($of) == $sklblFx2Repository->countFx2Associated($of)){
-                                $checkFxFx2Associated = true;
-                                echo "Success: Tous les fx2 et fx sont associés\b";
-                            }else{
-                                echo "Error: Certains fx2 et fx ne sont pas associés\b";
-                            }
-
-                            if($checkFx2Records){
-                                $sklblFile->setStatus(3);
-                                $entityManager->persist($sklblFile);
-                                $entityManager->flush();
-                                rename($dirEnTraitement.$fileRecu, $dirTraite.$fileRecu);
-
-                                $order->setSklblStatus(11);
-                                $entityManager->persist($order);
-                                $entityManager->flush();
-                            }
-
-                        }
-
-                    }
-                        
-                }
-            }
-            return $this->json('F2: enregistrements traités');
-        }else{
-            return $this->json('F2: Aucun fichier reçu');
-        }
-
-        
-    }
+    
     
 
     #[Route('/generate_f1_test', name: 'generate_f1_test')]
@@ -1459,7 +2188,10 @@ class ScalabelController extends AbstractController
     }
 
  
-
+    /*************************************************Import des emballages********** ********************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
 
 
     #[Route('/api/emballage/import/{dossier}', name: 'emballage_import', methods:['post'] )]
@@ -1497,6 +2229,12 @@ class ScalabelController extends AbstractController
         return $this->json($count . ' Emballages importés');
     }
 
+
+    /*************************************************Import des rubriques********** ********************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
+
     #[Route('/api/rubrique/import/{dossier}', name: 'rubrique_import', methods:['post'] )]
     public function rubrique_import(ManagerRegistry $doctrine,
     SklblRepository $sklblRepository,
@@ -1529,6 +2267,10 @@ class ScalabelController extends AbstractController
         return $this->json($count . ' Rubriques importées');
     }
 
+     /*************************************************Import des commandes Scalabel ********************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
 
     #[Route('/api/orders/import/{dossier}/{days}', name: 'ordersSklbl_import', methods:['post'] )]
     public function orders_import(ManagerRegistry $doctrine,
@@ -1587,6 +2329,12 @@ class ScalabelController extends AbstractController
         }
         return $this->json($count . ' Ofs Scalabel importés');
     }
+
+
+    /*************************************************Import des OFs Scalabel **************************************
+     *                                                                                                              *
+     *                                                                                                              *
+     ****************************************************************************************************************/
 
 
     #[Route('/api/ofs/import/{dossier}/{days}', name: 'ofsSklbl_import', methods:['post'] )]

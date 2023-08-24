@@ -19,6 +19,7 @@ class SklblUploadConfigFormType extends AbstractType
     {
         $builder
             ->add('sklblStructure', EntityType::class, [
+                'label' => 'Identifiant', 
                 'class' => SklblStructure::class,
                 'choice_label' => function (SklblStructure $structure): string {
                     return $structure->getName();

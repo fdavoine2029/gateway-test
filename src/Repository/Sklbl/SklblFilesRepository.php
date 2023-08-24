@@ -171,6 +171,19 @@ class SklblFilesRepository extends ServiceEntityRepository
     }
 
     
+    public function getF2FilesReceived(): array
+    {
+        return $this->createQueryBuilder('s')
+        ->andWhere('s.categorie = :categorie')
+        ->andWhere('s.status = :status or s.status = :status2')
+            ->setParameter('categorie', 'fx2')
+            ->setParameter('status', 3)
+            ->setParameter('status2', 4)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+    
 
     public function getStep4FileAGenererList($order): array
     {

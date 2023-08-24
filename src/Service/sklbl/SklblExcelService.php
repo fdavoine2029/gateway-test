@@ -53,6 +53,19 @@ class SklblExcelService
         return $r;
     }
 
+    public function alphaNum2($letters){
+        $num = 0;
+        $arr = array_reverse(str_split($letters));
+    
+        for ($i = 0; $i < count($arr); $i++) {
+            $num += (ord(strtolower($arr[$i])) - 96) * (pow(26,$i));
+        }
+        if($num == -96){
+            $num = null;
+        }
+        return $num;
+    }
+
     public function openF1(SklblFiles $file,$param){
         $of = $file->getSklblOf();
         $order = $file->getSklblOrder();
@@ -68,6 +81,7 @@ class SklblExcelService
     public function createNewF1(SklblFiles $file,$columnList,$param){
         $of = $file->getSklblOf();
         $order = $file->getSklblOrder();
+        
         $this->filename = $param .'/F1_'. $of->getCode().'-'.$order->getOrderNum().'-'.$file->getId().'.csv';
         $this->spreadsheet = new Spreadsheet();
         $this->activeWorkSheet = $this->spreadsheet->getActiveSheet();
@@ -93,42 +107,13 @@ class SklblExcelService
         $this->activeWorkSheet->setCellValue('T1','NOM-PRE-LISTE-BLANCHE-2');
         $this->activeWorkSheet->setCellValue('U1','QTY-MIN-LIVRABLE');
         $this->activeWorkSheet->setCellValue('V1','CODE-CLIENT');
-        $this->activeWorkSheet->setCellValue('W1','SKU');
-        $this->activeWorkSheet->setCellValue('X1','SKU_TISSE');
-        foreach($columnList as $column){
-            switch ($column->getNum()) {
-                case 6:
-                    $this->activeWorkSheet->setCellValue('Y1',$column->getColumnLabel());
-                    break;
-                case 7:
-                    $this->activeWorkSheet->setCellValue('Z1',$column->getColumnLabel());
-                    break;
-                case 8:
-                    $this->activeWorkSheet->setCellValue('AA1',$column->getColumnLabel());
-                    break;
-                case 9:
-                    $this->activeWorkSheet->setCellValue('AB1',$column->getColumnLabel());
-                    break;
-                case 10:
-                    $this->activeWorkSheet->setCellValue('AC1',$column->getColumnLabel());
-                    break;
-                case 11:
-                    $this->activeWorkSheet->setCellValue('AD1',$column->getColumnLabel());
-                    break;
-                case 12:
-                    $this->activeWorkSheet->setCellValue('AE1',$column->getColumnLabel());
-                    break;
-                case 13:
-                    $this->activeWorkSheet->setCellValue('AF1',$column->getColumnLabel());
-                    break;
-                case 14:
-                    $this->activeWorkSheet->setCellValue('AG1',$column->getColumnLabel());
-                    break;
-                case 15:
-                    $this->activeWorkSheet->setCellValue('AH1',$column->getColumnLabel());
-                    break;
-            }
 
+        foreach($columnList as $column){
+            $letter = trim($column->getF1Csv());
+            $field = $letter.'1';
+            echo '\n'.$column->getLabel();
+            $this->activeWorkSheet->setCellValue($field,$column->getLabel());
+            
         }
         $this->writer = new \PhpOffice\PhpSpreadsheet\Writer\Csv($this->spreadsheet);
         $this->writer->setDelimiter(';');

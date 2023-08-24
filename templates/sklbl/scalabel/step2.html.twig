@@ -75,8 +75,12 @@
                     <table id="sku2_table" class="display" style="width:100%;font-size: 0.8em">
                         <thead>
                             <tr>
+                                {% set colnum = 1 %}
                                 {% for column in columns %}
-                                    <th>{{ column.label }}</th>                               
+                                    {% if colnum <= 10 %}
+                                        <th>{{ column.label }}</th>
+                                    {% endif %}
+                                    {% set colnum = colnum + 1 %}                               
                                 {% endfor %}
                                 <th>Quantités supplémentaire</th>
                                 <th>Quantités à produire</th>
@@ -93,6 +97,14 @@
                                     {% if column.sklblStructure.name == "data1" %}<th>{{ sku.data1 }}</th>{% endif %}
                                     {% if column.sklblStructure.name == "data2" %}<th>{{ sku.data2 }}</th>{% endif %}
                                     {% if column.sklblStructure.name == "data3" %}<th>{{ sku.data3 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data4" %}<th>{{ sku.data4 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data5" %}<th>{{ sku.data5 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data6" %}<th>{{ sku.data6 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data7" %}<th>{{ sku.data7 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data8" %}<th>{{ sku.data8 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data9" %}<th>{{ sku.data9 }}</th>{% endif %}
+                                    {% if column.sklblStructure.name == "data10" %}<th>{{ sku.data10 }}</th>{% endif %}
+
                                 {% endfor %}
                                 <th>{{ sku.off_qte }}</th>
                                 <th>{{ sku.produce_qte }}</th>
@@ -103,8 +115,12 @@
                         </tbody>
                         <tfoot>
                             <tr>
+                                {% set colnum = 1 %}
                                 {% for column in columns %}
-                                    <th>{{ column.label }}</th>                               
+                                    {% if colnum <= 10 %}
+                                        <th>{{ column.label }}</th>
+                                    {% endif %}
+                                    {% set colnum = colnum + 1 %}                               
                                 {% endfor %}
                                 <th>Quantités supplémentaire</th>
                                 <th>Quantités à produire</th>

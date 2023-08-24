@@ -1,0 +1,108 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Scalabel - Génération OF{% endblock %}
+
+{% block body %}
+
+ {% block stylesheets %}
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet"/>
+ {% endblock %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('assets/js/sklbl_menu.js')}}"></script>
+    <script src="{{ asset('assets/js/sklbl_logs.js')}}"></script>
+
+{% endblock %}
+<main class="container-fluid">
+    <section class="row">
+    <h3> Scalabel - Commandes {{sklblOrder.orderNum}}</h3>
+        {% include '_partials/_sklbl/_menu.html.twig' %}
+
+        <fieldset class="border p-2">
+        <legend  class="float-none w-auto p-2">Logs</legend>
+            <div class="row pt-2">
+                <div class="col-12">
+                <table id="logs_table" class="display" style="width:100%;font-size: 0.8em">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Job</th>
+                        <th>Mode</th>
+                        <th>Message</th>
+                        <th>Login</th>
+                        <th>Date d'execution</th>
+                        <th>Progress.(%)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for log in logs %}
+                    {% if log.status == 1 %}
+                        <tr style='background-color: #D4EFDF;'>
+                            <td>{{ log.id }}</td> 
+                            <td>{{ log.jobName }}</td>
+                            <td>{{ log.mode }}</td>
+                            <td>{{ log.message }}</td> 
+                            {% if log.user %}
+                                <td>{{ log.user.email }}</td> 
+                                {% else %}
+                                <td> </td> 
+                            {% endif %}
+                            
+                            <td>{{ log.executedAt|date('d-m-Y H:i') }}</td>  
+                            <td>{{ log.progress }}</td>
+                            <td>Succès</td> 
+                        </tr>
+                    {% elseif  log.status == 2 %}
+                        <tr>
+                            <td>{{ log.id }}</td> 
+                            <td>{{ log.jobName }}</td>
+                            <td>{{ log.mode }}</td>
+                            <td>{{ log.message }}</td> 
+                            {% if log.user %}
+                                <td>{{ log.user.email }}</td> 
+                                {% else %}
+                                <td> </td> 
+                            {% endif %}
+                            <td>{{ log.executedAt|date('d-m-Y H:i') }}</td>  
+                            <td>{{ log.progress }}</td>
+                            <td>En cours</td> 
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td>{{ log.id }}</td> 
+                            <td>{{ log.jobName }}</td>
+                            <td>{{ log.mode }}</td>
+                            <td>{{ log.message }}</td> 
+                            {% if log.user %}
+                                <td>{{ log.user.email }}</td> 
+                                {% else %}
+                                <td> </td> 
+                            {% endif %}
+                            <td>{{ log.executedAt|date('d-m-Y H:i') }}</td>  
+                            <td>{{ log.progress }}</td> 
+                            <td>Echec</td> 
+                        </tr>
+                    {% endif %}
+                    
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Id</th>
+                        <th>Job</th>
+                        <th>Mode</th>
+                        <th>Message</th>
+                        <th>Login</th>
+                        <th>Date d'execution</th>
+                        <th>Progress.(%)</th>
+                        <th>Status</th>
+                    </tr>
+                </tfoot>
+                </div>
+            </div>
+        </fieldset>
+</main>
+{% endblock %}

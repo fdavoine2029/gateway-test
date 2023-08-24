@@ -2,6 +2,7 @@
 
 namespace App\Entity\Sklbl;
 
+use App\Entity\Users;
 use App\Repository\Sklbl\SklblLogsRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -25,6 +26,18 @@ class SklblLogs
 
     #[ORM\Column]
     private ?int $status = null;
+
+    #[ORM\ManyToOne]
+    private ?SklblOrders $sklblOrder = null;
+
+    #[ORM\Column(length: 50)]
+    private ?string $mode = null;
+
+    #[ORM\ManyToOne(inversedBy: 'sklblLogs')]
+    private ?Users $user = null;
+
+    #[ORM\Column]
+    private ?int $progress = null;
 
     public function getId(): ?int
     {
@@ -75,6 +88,54 @@ class SklblLogs
     public function setStatus(int $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getSklblOrder(): ?SklblOrders
+    {
+        return $this->sklblOrder;
+    }
+
+    public function setSklblOrder(?SklblOrders $sklblOrder): static
+    {
+        $this->sklblOrder = $sklblOrder;
+
+        return $this;
+    }
+
+    public function getMode(): ?string
+    {
+        return $this->mode;
+    }
+
+    public function setMode(string $mode): static
+    {
+        $this->mode = $mode;
+
+        return $this;
+    }
+
+    public function getUser(): ?Users
+    {
+        return $this->user;
+    }
+
+    public function setUser(?Users $user): static
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function getProgress(): ?int
+    {
+        return $this->progress;
+    }
+
+    public function setProgress(int $progress): static
+    {
+        $this->progress = $progress;
 
         return $this;
     }

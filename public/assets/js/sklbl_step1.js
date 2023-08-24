@@ -2,7 +2,7 @@ $(document).ready(function () {
 
     var table = $('#sku_table').dataTable( {
         destroy: true,
-        order: [[ 1, 'asc' ],[ 0, 'desc' ]],
+        order: [[ 0, 'asc' ],[ 1, 'desc' ]],
 
         fixedColumns: true
     } );

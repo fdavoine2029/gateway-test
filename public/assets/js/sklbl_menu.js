@@ -1,4 +1,6 @@
-
+function show_logs(orderId) {
+    window.location.replace("/sklbl/show_logs/"+orderId); 
+}
 
 function step_conf(orderId) {
     window.location.replace("/sklbl/step_conf/"+orderId+"/none"); 

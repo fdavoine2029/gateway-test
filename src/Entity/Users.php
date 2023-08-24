@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Sklbl\SklblLogs;
 use App\Entity\Trait\CreatedAtTrait;
 use App\Repository\UsersRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -61,11 +62,15 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'checked_by', targetEntity: QualityCtrl::class)]
     private Collection $qualityCtrls;
 
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: SklblLogs::class)]
+    private Collection $sklblLogs;
+
     public function __construct()
     {
         $this->orders = new ArrayCollection();
         $this->created_at = new \DateTimeImmutable();
         $this->qualityCtrls = new ArrayCollection();
+        $this->sklblLogs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -276,6 +281,36 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($qualityCtrl->getCheckedBy() === $this) {
                 $qualityCtrl->setCheckedBy(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, SklblLogs>
+     */
+    public function getSklblLogs(): Collection
+    {
+        return $this->sklblLogs;
+    }
+
+    public function addSklblLog(SklblLogs $sklblLog): static
+    {
+        if (!$this->sklblLogs->contains($sklblLog)) {
+            $this->sklblLogs->add($sklblLog);
+            $sklblLog->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSklblLog(SklblLogs $sklblLog): static
+    {
+        if ($this->sklblLogs->removeElement($sklblLog)) {
+            // set the owning side to null (unless already changed)
+            if ($sklblLog->getUser() === $this) {
+                $sklblLog->setUser(null);
             }
         }
 

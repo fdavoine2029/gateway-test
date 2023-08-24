@@ -82,20 +82,24 @@ class SklblFx2Repository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
-//    /**
-//     * @return SklblFx2[] Returns an array of SklblFx2 objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('s.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+
+
+
+
+    /**
+     * @return SklblFx2[] Returns an array of SklblFx2 objects
+     */
+    public function findFx2sNotAssociated($value): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.sklblFile = :sklblFile')
+            ->andWhere('s.SklblFx is null')
+            ->setParameter('sklblFile', $value)
+            ->orderBy('s.id', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
 
 //    public function findOneBySomeField($value): ?SklblFx2
 //    {

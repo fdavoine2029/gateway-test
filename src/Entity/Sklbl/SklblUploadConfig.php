@@ -79,6 +79,33 @@ class SklblUploadConfig
     #[ORM\ManyToOne(inversedBy: 'sklblUploadConfigs')]
     private ?SklblStructure $sklblStructure = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $f1CsvNum = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $f2CsvNum = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $f3CsvNum = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $f4CsvNum = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $f5CsvNum = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $customerCsvNum = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $lisageCsvNum = null;
+
+    #[ORM\ManyToOne(inversedBy: 'sklblUploadConfig')]
+    private ?SklblModel $SklblModel = null;
+
+
+
+
 
 
 
@@ -350,6 +377,105 @@ class SklblUploadConfig
 
         return $this;
     }
+
+    public function getF1CsvNum(): ?int
+    {
+        return $this->f1CsvNum;
+    }
+
+    public function setF1CsvNum(?int $f1CsvNum): static
+    {
+        $this->f1CsvNum = $f1CsvNum;
+
+        return $this;
+    }
+
+    public function getF2CsvNum(): ?int
+    {
+        return $this->f2CsvNum;
+    }
+
+    public function setF2CsvNum(?int $f2CsvNum): static
+    {
+        $this->f2CsvNum = $f2CsvNum;
+
+        return $this;
+    }
+
+    public function getF3CsvNum(): ?int
+    {
+        return $this->f3CsvNum;
+    }
+
+    public function setF3CsvNum(?int $f3CsvNum): static
+    {
+        $this->f3CsvNum = $f3CsvNum;
+
+        return $this;
+    }
+
+    public function getF4CsvNum(): ?int
+    {
+        return $this->f4CsvNum;
+    }
+
+    public function setF4CsvNum(?int $f4CsvNum): static
+    {
+        $this->f4CsvNum = $f4CsvNum;
+
+        return $this;
+    }
+
+    public function getF5CsvNum(): ?int
+    {
+        return $this->f5CsvNum;
+    }
+
+    public function setF5CsvNum(?int $f5CsvNum): static
+    {
+        $this->f5CsvNum = $f5CsvNum;
+
+        return $this;
+    }
+
+    public function getCustomerCsvNum(): ?int
+    {
+        return $this->customerCsvNum;
+    }
+
+    public function setCustomerCsvNum(?int $customerCsvNum): static
+    {
+        $this->customerCsvNum = $customerCsvNum;
+
+        return $this;
+    }
+
+    public function getLisageCsvNum(): ?int
+    {
+        return $this->lisageCsvNum;
+    }
+
+    public function setLisageCsvNum(?int $lisageCsvNum): static
+    {
+        $this->lisageCsvNum = $lisageCsvNum;
+
+        return $this;
+    }
+
+    public function getSklblModel(): ?SklblModel
+    {
+        return $this->SklblModel;
+    }
+
+    public function setSklblModel(?SklblModel $SklblModel): static
+    {
+        $this->SklblModel = $SklblModel;
+
+        return $this;
+    }
+
+
+   
 
 
     

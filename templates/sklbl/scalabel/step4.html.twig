@@ -247,9 +247,13 @@
             <table id="fx_table" class="display" style="width:100%;font-size: 0.8em">
                 <thead>
                     <tr>
-                        {% for column in columns %}
-                            <th>{{ column.label }}</th>                               
-                        {% endfor %}
+                        {% set colnum = 1 %}
+                                {% for column in columns %}
+                                    {% if colnum <= 10 %}
+                                        <th>{{ column.label }}</th>
+                                    {% endif %}
+                                    {% set colnum = colnum + 1 %}                               
+                                {% endfor %}
                         <th>Envoyé le</th>
                         <th>Reçu le</th>
                         <th>Statut</th>
@@ -266,6 +270,13 @@
                             {% if column.sklblStructure.name == "data1" %}<th>{{ fx['data1'] }}</th>{% endif %}
                             {% if column.sklblStructure.name == "data2" %}<th>{{ fx['data2'] }}</th>{% endif %}
                             {% if column.sklblStructure.name == "data3" %}<th>{{ fx['data3'] }}</th>{% endif %}
+                            {% if column.sklblStructure.name == "data4" %}<th>{{ fx['data4'] }}</th>{% endif %}
+                            {% if column.sklblStructure.name == "data5" %}<th>{{ fx['data5'] }}</th>{% endif %}
+                            {% if column.sklblStructure.name == "data6" %}<th>{{ fx['data6'] }}</th>{% endif %}
+                            {% if column.sklblStructure.name == "data7" %}<th>{{ fx['data7'] }}</th>{% endif %}
+                            {% if column.sklblStructure.name == "data8" %}<th>{{ fx['data8'] }}</th>{% endif %}
+                            {% if column.sklblStructure.name == "data9" %}<th>{{ fx['data9'] }}</th>{% endif %}
+                            {% if column.sklblStructure.name == "data10" %}<th>{{ fx['data10'] }}</th>{% endif %}
                         {% endfor %}
                         <th>{{ fx['sent_on'] }}</th>
                         <th>{{ fx['received_on'] }}</th>
@@ -276,9 +287,13 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        {% for column in columns %}
-                            <th>{{ column.label }}</th>                               
-                        {% endfor %}
+                        {% set colnum = 1 %}
+                                {% for column in columns %}
+                                    {% if colnum <= 10 %}
+                                        <th>{{ column.label }}</th>
+                                    {% endif %}
+                                    {% set colnum = colnum + 1 %}                               
+                                {% endfor %}
                         <th>Envoyé le</th>
                         <th>Reçu le</th>
                         <th>Statut</th>

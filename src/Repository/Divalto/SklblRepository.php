@@ -104,7 +104,6 @@ class SklblRepository extends ServiceEntityRepository
                 and MOUV.REF in (SELECT distinct ENTITEINDEX FROM [MRBQVAL] where MRBQVAL.RUBRIQUE = 'FIL_NOM_FICHIER_1')
                 and CDDT is not null
                 group by MOUV.[DOS]
-                
                     ,MOUV.CDNO
                     ,[TIERS]
                     ,MOUV.[REF]

@@ -1,0 +1,40 @@
+
+<html>
+    <head>
+        <style>
+            .qrcode{
+                position: absolute;
+                top: 0px;
+                left: 40px;
+            }  
+            .ref{
+                position: absolute;
+                top: 120px;
+                left: 20px;
+            } 
+            .orderNum{
+                position: absolute;
+                top: 90px;
+                left: 180px;
+            }   
+            .numBl{
+                position: absolute;
+                top: 120px;
+                left: 180px;
+            }
+            .lot{
+                position: absolute;
+                top: 90px;
+                left: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="qrcode">{{ barcode|raw }}</div>
+        <p><span class="ref">Ref: {{ ref }}</p>
+        <div class="orderNum">Order: {{ orderNum}}</div>
+        <div class="numBl">BL: {{ numBl}}</div>
+        <div class="lot">Lot: {{ lot }}</div>  
+    </body>
+</html>
+

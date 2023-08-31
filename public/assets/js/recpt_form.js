@@ -1,7 +1,9 @@
 $(document).ready(function () {
     $('#numBlFou2').html('BL: ' + $('#numBlFou').val());
+    $('#numBlFou2').html('BL: ' + $('#numBlFou').val());
     $('#numBlFou').change(function() {
         $('#numBlFou2').html('BL: ' + $('#numBlFou').val());
+        $('#numBlFou3').html('BL: ' + $('#numBlFou').val());
         if($('#numBlFou').val() != ""){
             $('#btn_papade').prop('disabled',false);
         }else{
@@ -22,7 +24,8 @@ function printDiv(divName) {
 
 function print_papade(ref,lot,orderNum) {
     var num_bl = $('#numBlFou').val();
-    window.open("/recpt/recpt/generatePdf/"+ref+"/"+lot+"/"+orderNum+"/"+num_bl);
+    //window.open("/recpt/generateQrCodePdf/"+ref+"/"+lot+"/"+orderNum+"/"+num_bl);
+    window.open("/recpt/generateBarCodePdf/"+ref+"/"+lot+"/"+orderNum+"/"+num_bl);
 }
 
 

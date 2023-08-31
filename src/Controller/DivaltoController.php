@@ -7,9 +7,6 @@ use App\Entity\Clients;
 use App\Entity\Divalto\ART;
 use App\Entity\Fournisseurs;
 use App\Entity\OrderSup;
-use App\Entity\Sklbl\Rubriques;
-use App\Entity\Sklbl\Emballages;
-use App\Entity\Sklbl\OfsSklbl;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -21,13 +18,9 @@ use App\Repository\Divalto\ARTRepository;
 use App\Repository\Divalto\CLIRepository;
 use App\Repository\Divalto\FOURepository;
 use App\Repository\Divalto\MOUVRepository;
-use App\Repository\Divalto\SklblDivaltoRepository;
 use App\Repository\FournisseursRepository;
 use App\Repository\OrderSupRepository;
 use App\Repository\ReceivSupDetailsRepository;
-use App\Repository\Sklbl\RubriquesRepository;
-use App\Repository\Sklbl\EmballagesRepository;
-use App\Repository\Sklbl\OfsSklblRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -70,8 +63,7 @@ class DivaltoController extends AbstractController
     EntityManagerInterface $entityManager, 
     ArticlesRepository $articlesRepository,
     string $dossier,
-    int $days,
-    Request $request): JsonResponse
+    int $days): JsonResponse
     {
         $articles = $artRepository->getDivaltoFArts($dossier,$days);
         $currentDate = new DateTimeImmutable();
@@ -120,8 +112,7 @@ class DivaltoController extends AbstractController
     EntityManagerInterface $entityManager, 
     ArticlesRepository $articlesRepository,
     string $dossier,
-    int $days,
-    Request $request): JsonResponse
+    int $days): JsonResponse
     {
         $articles = $artRepository->getDivaltoCArts($dossier,$days);
         $currentDate = new DateTimeImmutable();
@@ -170,8 +161,7 @@ class DivaltoController extends AbstractController
     EntityManagerInterface $entityManager, 
     ClientsRepository $clientsRepository,
     string $dossier,
-    int $days,
-    Request $request): JsonResponse
+    int $days): JsonResponse
     {
         $clients = $cliRepository->getDivaltoClis($dossier,$days);
         $currentDate = new DateTimeImmutable();
@@ -215,8 +205,7 @@ class DivaltoController extends AbstractController
     EntityManagerInterface $entityManager, 
     FournisseursRepository $fournisseursRepository,
     string $dossier,
-    int $days,
-    Request $request): JsonResponse
+    int $days): JsonResponse
     {
         $fournisseurs = $fouRepository->getDivaltoFous($dossier,$days);
         $currentDate = new DateTimeImmutable();
@@ -262,8 +251,7 @@ class DivaltoController extends AbstractController
     OrderSupRepository $orderSupRepository,
     ReceivSupDetailsRepository $receivRepository,
     string $dossier,
-    int $days,
-    Request $request): JsonResponse
+    int $days): JsonResponse
     {
         $outOfSync = $orderSupRepository->findOutOfSync();
         $commandes = $mouvRepository->getDivaltoCmdsFou($dossier,$days);

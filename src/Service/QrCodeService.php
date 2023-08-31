@@ -9,6 +9,7 @@ use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Label\Label;
 use Endroid\QrCode\Label\Font\NotoSans;
+use TomasVotruba\BarcodeBundle\Base1DBarcode;
 
 class QrCodeService
 {
@@ -31,5 +32,15 @@ class QrCodeService
                                 null
                             )->getDataUri();
         return $qrCodes;
+    }
+
+    public function generateBarCode($lot)
+    {
+        $myBarcode = new Base1DBarcode();
+        if($lot){
+
+            $bar = $myBarcode->getBarcodeHTML($lot, 'C128', 2, 80);
+            return $bar;
+        }
     }
 }

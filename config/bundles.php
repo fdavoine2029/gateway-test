@@ -16,4 +16,5 @@ return [
     JMS\SerializerBundle\JMSSerializerBundle::class => ['all' => true],
     FOS\RestBundle\FOSRestBundle::class => ['all' => true],
     Endroid\QrCodeBundle\EndroidQrCodeBundle::class => ['all' => true],
+    TomasVotruba\BarcodeBundle\BarcodeBundle::class => ['all' => true],
 ];

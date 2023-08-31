@@ -39,6 +39,17 @@ class ReceivSupDetailsRepository extends ServiceEntityRepository
         }
     }
 
+    public function countLot($numlot){
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(DISTINCT u.id)')
+            ->where('SUBSTRING(u.batch_num,1,13) = :numLot')
+            ->setParameter('numLot', $numlot)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+
+
 //    /**
 //     * @return ReceivSupDetails[] Returns an array of ReceivSupDetails objects
 //     */

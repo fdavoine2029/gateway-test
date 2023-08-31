@@ -47,7 +47,7 @@ class MOUVRepository extends ServiceEntityRepository
 
 
         $sql = "select 
-                MOUV.[MOUV_ID]
+                concat(MOUV.[MOUV_ID],MVTL.VTLNO) as MOUV_ID
                 ,MOUV.[DOS]
                 ,MOUV.[ETB]
                 ,MOUV.[REF]

@@ -106,7 +106,7 @@
             </div>
             {% if article.lot == 1 %}
             <div class="col-4 " >
-                <div  class="row"   id="etiquette">
+                <div  class="row"   id="etiquette"  hidden>
                     <div class="d-flex border" style="height: 140px;width: 370px;">
                         <div class="p-2"><img src="{{ qrcode.simple }}" /></div>
                         <div class="p-2">
@@ -119,6 +119,30 @@
                         </div>
                     </div>
                 </div>
+                <div  class="row"   id="etiquette">
+                    <div class=" border mt-4" style="height: 160px;width: 370px;">
+     
+                        <div class="row">
+                            <div class="col-2">
+                            </div>
+                            <div class="col-8 p-2">
+                            {{ barcode|raw }}
+                            </div>
+                            <div class="col-2">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="p-1">Lot: {{ lot }}</div>
+                                <div class="p-1">Ref: {{ article.ref }}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-1">Order: {{ order.orderNum}}</div>
+                                <div class="p-1" id="numBlFou3">BL: </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div  class="row">
                     <div class="col-2 "></div>
                     <div class="col-4 ">
@@ -127,7 +151,6 @@
                     
                         {% else %}
                             <button type="button" id="btn_papade" name="btn_papade" class="btn btn-primary mt-2"  onclick="print_papade('{{ article.ref }}','{{ lot }}','{{ order.orderNum}}')" disabled>Imprimer</button>
-                    
                         {% endif %}
 
                         </div>

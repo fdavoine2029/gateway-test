@@ -19,7 +19,7 @@ class PdfService
         $this->dompdf->loadHtml($html);
         //$this->dompdf->setPaper('A4', 'landscape');
         
-        $customPaper = array(0,0,300,150);
+        $customPaper = array(0,0,300,200);
         $this->dompdf->setPaper($customPaper);
         
         $this->dompdf->render();

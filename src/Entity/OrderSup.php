@@ -13,7 +13,7 @@ class OrderSup
 {
     #[ORM\Id]
     #[ORM\Column]
-    private ?int $id = null;
+    private ?string $id = null;
 
     #[ORM\Column(length: 8)]
     private ?string $dossier = null;
@@ -123,12 +123,12 @@ class OrderSup
         $this->qualityCtrls = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): ?string
     {
         return $this->id;
     }
 
-    public function setId(int $id): self
+    public function setId(string $id): self
     {
         $this->id = $id;
         return $this;

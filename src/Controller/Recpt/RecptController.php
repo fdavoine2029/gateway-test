@@ -63,7 +63,9 @@ class RecptController extends AbstractController
         }
         $article = $articlesRepository->find($order->getArticle());
         $fournisseur = $fournisseursRepository->find($order->getFournisseur());
-        $lot = strval($order->getOrderNum()) . strval($order->getId());
+        $racLot = strval($order->getOrderNum()) . strval($order->getNoVentilation());
+        $incLot = $receivSupDetailsRepository->countLot($racLot);
+        $lot = $racLot.strval($incLot);
 
         $form = $this->createForm(receivSupDetailsFormType::class, $receivSupDetails);
         
@@ -88,7 +90,6 @@ class RecptController extends AbstractController
             }else{
                 $qualityCtrl = new QualityCtrl();
                 $qualityCtrl->setOrderSup($order);
-                
             }
             
             
@@ -118,6 +119,7 @@ class RecptController extends AbstractController
         // Génération du QRCode;
         $qrCodes = [];
         $qrCodes = $qrCode->generateQrCode($lot);
+        $barCodes = $qrCode->generateBarCode($lot);
 
         //return $this->render('recpt/recpt/reception.html.twig',compact('receivSup','order','article','fournisseur'),'registrationForm' => $form->createView(),);
         return $this->render('recpt/recpt/reception.html.twig',[
@@ -126,22 +128,37 @@ class RecptController extends AbstractController
             'article' => $article,
             'fournisseur' => $fournisseur,
             'qrcode' => $qrCodes, 
+            'barcode' => $barCodes, 
             'lot' => $lot,
             'receivForm' => $form->createView()
         ]);
     }
 
-    #[Route('/generatePdf/{ref}/{lot}/{orderNum}/{numBl}', name: 'generatePdf')]
-    public function generatePdf(PdfService $pdf,QrCodeService $qrCode,string $ref,string $lot,string $orderNum,string $numBl){
+    #[Route('/generateQrCodePdf/{ref}/{lot}/{orderNum}/{numBl}', name: 'generatePdf')]
+    public function generateQrCodePdf(PdfService $pdf,QrCodeService $qrCode,string $ref,string $lot,string $orderNum,string $numBl){
         // Génération du QRCode;
         $qrCodes = [];
         $qrCodes = $qrCode->generateQrCode($lot);
-        $html = $this->render('recpt/recpt/papade.html.twig',[
+        $html = $this->render('recpt/recpt/papadeQrCode.html.twig',[
             'ref' => $ref,
             'lot' => $lot,
             'orderNum' => $orderNum,
             'numBl' => $numBl,
             'qrcode' => $qrCodes
+        ])->getContent();
+        $pdf->showPdfFile($html);
+    }
+
+    #[Route('/generateBarCodePdf/{ref}/{lot}/{orderNum}/{numBl}', name: 'generatePdf')]
+    public function generateBarCodePdf(PdfService $pdf,QrCodeService $qrCode,string $ref,string $lot,string $orderNum,string $numBl){
+        // Génération du QRCode;
+        $barCodes = $qrCode->generateBarCode($lot);
+        $html = $this->render('recpt/recpt/papadeBarCode.html.twig',[
+            'ref' => $ref,
+            'lot' => $lot,
+            'orderNum' => $orderNum,
+            'numBl' => $numBl,
+            'barcode' => $barCodes
         ])->getContent();
         $pdf->showPdfFile($html);
     }

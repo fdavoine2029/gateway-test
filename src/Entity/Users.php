@@ -54,10 +54,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 100)]
     private ?string $resetToken = null;
-    
-
-    #[ORM\OneToMany(mappedBy: 'users', targetEntity: Orders::class)]
-    private Collection $orders;
+ 
 
     #[ORM\OneToMany(mappedBy: 'checked_by', targetEntity: QualityCtrl::class)]
     private Collection $qualityCtrls;
@@ -67,7 +64,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
-        $this->orders = new ArrayCollection();
+
         $this->created_at = new \DateTimeImmutable();
         $this->qualityCtrls = new ArrayCollection();
         $this->sklblLogs = new ArrayCollection();
@@ -226,36 +223,6 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     
-
-    /**
-     * @return Collection<int, Orders>
-     */
-    public function getOrders(): Collection
-    {
-        return $this->orders;
-    }
-
-    public function addOrder(Orders $order): self
-    {
-        if (!$this->orders->contains($order)) {
-            $this->orders->add($order);
-            $order->setUsers($this);
-        }
-
-        return $this;
-    }
-
-    public function removeOrder(Orders $order): self
-    {
-        if ($this->orders->removeElement($order)) {
-            // set the owning side to null (unless already changed)
-            if ($order->getUsers() === $this) {
-                $order->setUsers(null);
-            }
-        }
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, QualityCtrl>

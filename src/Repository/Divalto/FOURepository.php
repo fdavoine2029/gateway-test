@@ -39,36 +39,6 @@ class FOURepository extends ServiceEntityRepository
         }
     }
 
-    public function getDivaltoFous($dossier,$days): array
-    {
-        $conn = $this->getEntityManager()->getConnection();
-
-        $sql = "select 
-        FOU_ID,
-        DOS,
-        TIERS,
-        NOM,
-        PAY,
-        TRANSJRNB,
-        case when (FOU.USERMODH is null or FOU.USERCRDH > FOU.USERMODH) then FOU.USERCRDH else FOU.USERMODH end as REF_IMPORT_DATE
-        from FOU
-        where TIERS in 
-        (
-            select MOUV.TIERS
-            FROM MOUV JOIN MVTL
-            ON MOUV.DOS = MVTL.DOS AND MOUV.ENRNO = MVTL.ENRNO
-            where MOUV.TICOD = 'F'
-            AND MVTL.DELDT >= GETDATE() - $days
-            AND MVTL.REFQTE <> 0
-        )
-        and DOS = '$dossier'
-        AND (FOU.USERMODH > GETDATE() - $days or FOU.USERCRDH > GETDATE() - $days)";
-            
-        $stmt = $conn->prepare($sql);
-        //$resultSet = $stmt->executeQuery(['price' => $price]);
-        $resultSet = $stmt->executeQuery();
-        // returns an array of arrays (i.e. a raw data set)
-        return $resultSet->fetchAllAssociative();
-    }
+    
 
 }
